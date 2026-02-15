@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蔵書管理システム Ver.16</title>
+    <title>蔵書管理システム Ver.17</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --accent: #f59e0b; --wish: #10b981; --amazon: #ff9900; }
@@ -24,7 +24,7 @@
         .btn-outline { border: 1px solid #ccc; background: white; color: #334155; }
         .btn-small { padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; }
 
-        /* タブUI */
+        /* タブ */
         .tab-menu { display: flex; gap: 5px; margin-bottom: 15px; background: #e2e8f0; padding: 5px; border-radius: 10px; }
         .tab-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; background: none; cursor: pointer; font-size: 0.8rem; }
         .tab-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: bold; }
@@ -32,13 +32,12 @@
         .tab-content.active { display: block; }
 
         .text-input, .select-input { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 10px; background: white; outline: none; }
-        .text-input:focus { border-color: var(--primary); }
         
-        /* リスト表示 */
+        /* リスト */
         .list-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #eee; gap: 12px; }
         .book-thumb { width: 50px; height: 70px; object-fit: cover; border-radius: 4px; background: #e2e8f0; flex-shrink: 0; border: 1px solid #eee; }
         .item-info { flex: 1; font-size: 0.85rem; overflow: hidden; }
-        .item-title { font-weight: bold; display: block; margin-bottom: 2px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-title { font-weight: bold; display: block; margin-bottom: 2px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .status-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: #e2e8f0; color: #475569; }
         .status-read { background: #dcfce7; color: #166534; }
         
@@ -50,11 +49,12 @@
         .modal-thumb-large { width: 120px; height: 170px; object-fit: cover; display: block; margin: 0 auto 15px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .rating-stars span { cursor: pointer; font-size: 1.5rem; color: #cbd5e1; }
         .rating-stars span.selected { color: var(--accent); }
+        .modal-label { font-size: 0.8rem; font-weight: bold; color: #64748b; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
 
-<div class="nav-header">蔵書管理システム Ver.16</div>
+<div class="nav-header">蔵書管理システム Ver.17</div>
 
 <div class="container">
     <!-- 1. トップページ -->
@@ -104,7 +104,7 @@
         <button class="btn btn-secondary" onclick="navTo('page-top')" style="margin-bottom:10px;">← 戻る</button>
         <div class="card">
             <div id="reader"></div>
-            <div id="scan-status" style="margin-top:10px; font-weight:bold; color:var(--primary); text-align:center;">スキャン待機中...</div>
+            <div id="scan-status" style="margin-top:10px; font-weight:bold; color:var(--primary); text-align:center;">バーコードをスキャンしてください</div>
         </div>
     </section>
 
@@ -115,7 +115,7 @@
             <input type="text" id="searchInput" class="text-input" placeholder="題名・作者・カテゴリー・感想から検索..." oninput="handleSearch()">
             <div id="historyListUI" style="margin-top:10px;"></div>
         </div>
-        <button class="btn btn-outline btn-full" onclick="exportToFile()">💾 データを書き出し(JSON)</button>
+        <button class="btn btn-outline btn-full" onclick="exportToFile()">💾 全データをバックアップ(JSON)</button>
     </section>
 </div>
 
@@ -125,7 +125,6 @@
         <img id="confirmThumb" class="modal-thumb-large" src="" alt="">
         <h3 id="confirmTitle" style="text-align:center; margin-bottom:5px;"></h3>
         <p id="confirmAuthor" style="text-align:center; color:#64748b; margin-bottom:20px;"></p>
-        <p style="text-align:center; font-weight:bold; color:var(--primary);">この本を蔵書に登録しますか？</p>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-primary" style="flex:2;" onclick="confirmRegister()">登録する</button>
             <button class="btn btn-secondary" style="flex:1;" onclick="cancelRegister()">キャンセル</button>
@@ -140,21 +139,24 @@
         <div class="rating-stars" id="ratingEdit" style="text-align:center; margin-bottom:10px;">
             <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
         </div>
-        <input type="hidden" id="edit-index"><input type="hidden" id="edit-mode">
+        <input type="hidden" id="edit-index">
+        <input type="hidden" id="edit-mode">
+        <input type="hidden" id="edit-rating-val" value="0">
         
-        <label style="font-size:0.8rem; font-weight:bold;">状況</label>
+        <label class="modal-label">読書状況</label>
         <select id="edit-status" class="select-input"><option value="未読">未読</option><option value="読書中">読書中</option><option value="読了">読了</option></select>
-        <label style="font-size:0.8rem; font-weight:bold;">読了日</label><input type="date" id="edit-read-date" class="text-input">
-        <label style="font-size:0.8rem; font-weight:bold;">カテゴリー</label><input type="text" id="edit-category" class="text-input" placeholder="ジャンルなど">
-        <label style="font-size:0.8rem; font-weight:bold;">題名</label><input type="text" id="edit-title" class="text-input">
-        <label style="font-size:0.8rem; font-weight:bold;">作者</label><input type="text" id="edit-author" class="text-input">
-        <label style="font-size:0.8rem; font-weight:bold;">感想・メモ</label><textarea id="edit-impression" class="text-input" style="height:80px;"></textarea>
+        <label class="modal-label">読了日</label><input type="date" id="edit-read-date" class="text-input">
+        <label class="modal-label">カテゴリー</label><input type="text" id="edit-category" class="text-input">
+        <label class="modal-label">価格</label><input type="number" id="edit-price" class="text-input">
+        <label class="modal-label">題名</label><input type="text" id="edit-title" class="text-input">
+        <label class="modal-label">作者</label><input type="text" id="edit-author" class="text-input">
+        <label class="modal-label">感想・メモ</label><textarea id="edit-impression" class="text-input" style="height:80px;"></textarea>
         
         <div style="display:flex; gap:10px; margin-top:15px;">
             <button class="btn btn-primary" style="flex:2;" onclick="saveEdit()">保存</button>
-            <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">戻る</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">閉じる</button>
         </div>
-        <button class="btn btn-full" style="color:red; background:none; font-size:0.8rem;" onclick="deleteEntry()">このデータを削除</button>
+        <button class="btn btn-full" style="color:red; background:none; font-size:0.8rem; margin-top:10px;" onclick="deleteEntry()">このデータを完全に削除</button>
     </div>
 </div>
 
@@ -170,115 +172,17 @@
         updateUI();
     };
 
-    // --- ナビゲーション ---
+    // --- ページ & タブ遷移 ---
     async function navTo(pageId) {
-        // カメラ停止処理を確実に待つ
         if (html5QrCode) {
-            try {
-                await html5QrCode.stop();
-                html5QrCode = null;
-            } catch (e) {
-                console.warn("Camera stop error:", e);
-                html5QrCode = null; // 強制クリア
-            }
+            try { await html5QrCode.stop(); html5QrCode = null; } catch (e) { html5QrCode = null; }
         }
-        
-        // 全ページ非表示
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        // 指定ページ表示
-        const targetPage = document.getElementById(pageId);
-        if (targetPage) {
-            targetPage.classList.add('active');
-            if (pageId === 'page-scan') startScanner();
-            updateUI();
-        }
+        document.getElementById(pageId).classList.add('active');
+        if (pageId === 'page-scan') startScanner();
+        updateUI();
     }
 
-    // --- UI更新 ---
-    function updateUI() {
-        document.getElementById('current-count').innerText = books.length;
-        document.getElementById('wish-count').innerText = wishlist.length;
-        
-        const wishUI = document.getElementById('wishListUI');
-        wishUI.innerHTML = wishlist.length === 0 ? "<p style='text-align:center; color:#999;'>空です</p>" : wishlist.map((b, i) => `
-            <div class="list-item">
-                <img src="${b.thumbnail || ''}" class="book-thumb">
-                <div class="item-info"><strong>${b.title}</strong><br><small>${b.author}</small></div>
-                <div style="display:flex; gap:5px;"><button class="btn btn-primary btn-small" onclick="moveToLibrary(${i})">購入</button><button class="btn btn-outline btn-small" onclick="openEdit(${i}, 'wish')">編集</button></div>
-            </div>`).reverse().join('');
-
-        if (document.getElementById('page-history').classList.contains('active')) handleSearch();
-    }
-
-    // --- スキャン処理 ---
-    function startScanner() {
-        const statusEl = document.getElementById('scan-status');
-        statusEl.innerText = "カメラ起動中...";
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (isbn) => {
-            if (isbn.startsWith("978")) {
-                html5QrCode.pause();
-                fetchFullBookInfo(isbn);
-            }
-        }).catch(err => { statusEl.innerText = "カメラ起動失敗"; });
-    }
-
-    async function fetchFullBookInfo(isbn) {
-        document.getElementById('scan-status').innerText = "書籍情報を取得中...";
-        try {
-            let title="", author="", publisher="", thumbnail="";
-            
-            // 1. openBD
-            const res = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`);
-            const data = await res.json();
-            if (data && data[0]) {
-                const info = data[0].summary;
-                title = info.title; author = info.author; publisher = info.publisher; thumbnail = info.cover;
-            }
-
-            // 2. Google Books (画像がない、または情報不足の場合)
-            if (!thumbnail || !title) {
-                const gRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-                const gData = await gRes.json();
-                if (gData.items) {
-                    const gInfo = gData.items[0].volumeInfo;
-                    title = title || gInfo.title;
-                    author = author || gInfo.authors?.join(', ');
-                    thumbnail = thumbnail || (gInfo.imageLinks ? gInfo.imageLinks.thumbnail.replace('http:','https:') : "");
-                }
-            }
-
-            if (title) {
-                pendingBook = { title, author, publisher, isbn, thumbnail, date: new Date().toLocaleDateString('ja-JP'), rating:0, impression:"", status:"未読", readDate:"", category:"", price:0 };
-                document.getElementById('confirmThumb').src = thumbnail || "";
-                document.getElementById('confirmTitle').innerText = title;
-                document.getElementById('confirmAuthor').innerText = author;
-                document.getElementById('confirmModal').style.display = "flex";
-            } else {
-                alert("本が見つかりませんでした");
-                html5QrCode.resume();
-            }
-        } catch(e) { alert("通信エラー"); html5QrCode.resume(); }
-    }
-
-    function confirmRegister() {
-        if (!books.some(b => b.isbn === pendingBook.isbn)) {
-            books.push(pendingBook);
-            saveData();
-        } else { alert("既に登録されています"); }
-        cancelRegister();
-    }
-
-    function cancelRegister() {
-        document.getElementById('confirmModal').style.display = "none";
-        pendingBook = null;
-        if (html5QrCode) {
-            try { html5QrCode.resume(); } catch(e){}
-        }
-        document.getElementById('scan-status').innerText = "スキャン待機中...";
-    }
-
-    // --- ウィッシュリスト機能 ---
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -286,6 +190,90 @@
         event.currentTarget.classList.add('active');
     }
 
+    // --- データ保存 & UI更新 ---
+    function saveData() {
+        localStorage.setItem('myBooks', JSON.stringify(books));
+        localStorage.setItem('myWishlist', JSON.stringify(wishlist));
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('current-count').innerText = books.length;
+        document.getElementById('wish-count').innerText = wishlist.length;
+        
+        // ウィッシュリストの描画
+        const wishUI = document.getElementById('wishListUI');
+        wishUI.innerHTML = wishlist.length === 0 ? "<p style='text-align:center;color:#999;'>空です</p>" : 
+            wishlist.map((b, i) => `
+                <div class="list-item">
+                    <img src="${b.thumbnail || ''}" class="book-thumb" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI3MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5Ij5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
+                    <div class="item-info">
+                        <span class="item-title">${escapeHtml(b.title)}</span>
+                        <small>${escapeHtml(b.author)}</small>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn btn-primary btn-small" onclick="purchaseBook(${i})">購入</button>
+                        <button class="btn btn-outline btn-small" onclick="openEdit(${i}, 'wish')">編集</button>
+                    </div>
+                </div>
+            `).reverse().join('');
+
+        if (document.getElementById('page-history').classList.contains('active')) handleSearch();
+    }
+
+    // --- スキャン処理 ---
+    function startScanner() {
+        document.getElementById('scan-status').innerText = "カメラ起動中...";
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (isbn) => {
+            if (isbn.startsWith("978")) {
+                html5QrCode.pause();
+                fetchBook(isbn);
+            }
+        }).catch(() => { document.getElementById('scan-status').innerText = "カメラ起動失敗"; });
+    }
+
+    async function fetchBook(isbn) {
+        document.getElementById('scan-status').innerText = "情報取得中...";
+        try {
+            let title="", author="", publisher="", thumbnail="";
+            const res = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`);
+            const data = await res.json();
+            if (data && data[0]) {
+                const s = data[0].summary;
+                title = s.title; author = s.author; publisher = s.publisher; thumbnail = s.cover;
+            }
+            if (!title) {
+                const gRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+                const gData = await gRes.json();
+                if (gData.items) {
+                    const gi = gData.items[0].volumeInfo;
+                    title = gi.title; author = gi.authors?.join(', ');
+                    thumbnail = gi.imageLinks?.thumbnail.replace('http:', 'https:');
+                }
+            }
+            if (title) {
+                pendingBook = { title, author, publisher, isbn, thumbnail, date: new Date().toLocaleDateString('ja-JP'), rating:0, impression:"", status:"未読", readDate:"", category:"", price:0 };
+                document.getElementById('confirmThumb').src = thumbnail || "";
+                document.getElementById('confirmTitle').innerText = title;
+                document.getElementById('confirmAuthor').innerText = author;
+                document.getElementById('confirmModal').style.display = "flex";
+            } else { alert("本が見つかりませんでした"); html5QrCode.resume(); }
+        } catch(e) { alert("通信エラー"); html5QrCode.resume(); }
+    }
+
+    function confirmRegister() {
+        if (!books.some(b => b.isbn === pendingBook.isbn)) { books.push(pendingBook); saveData(); }
+        cancelRegister();
+    }
+    function cancelRegister() {
+        document.getElementById('confirmModal').style.display = "none";
+        pendingBook = null;
+        if (html5QrCode) html5QrCode.resume();
+        document.getElementById('scan-status').innerText = "スキャン待機中...";
+    }
+
+    // --- ウィッシュリスト操作 ---
     async function searchWish() {
         const query = document.getElementById('wishSearchInput').value;
         const target = document.getElementById('wishCandidates');
@@ -294,73 +282,79 @@
         try {
             const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=15`);
             const data = await res.json();
-            if(!data.items) { target.innerHTML = "<p style='padding:10px;'>見つかりませんでした</p>"; return; }
+            if(!data.items) { target.innerHTML = "<p style='padding:10px;'>なし</p>"; return; }
             target.innerHTML = data.items.map(item => {
-                const info = item.volumeInfo;
-                const book = { title: info.title, author: info.authors?.[0] || "不明", thumbnail: info.imageLinks?.thumbnail.replace('http:','https:') || "", isbn: info.industryIdentifiers?.[0].identifier || "" };
+                const i = item.volumeInfo;
+                const b = { title: i.title, author: i.authors?.[0] || "不明", thumbnail: i.imageLinks?.thumbnail.replace('http:','https:') || "", isbn: i.industryIdentifiers?.[0].identifier || "" };
                 return `<div class="list-item">
-                    <img src="${book.thumbnail}" class="book-thumb">
-                    <div class="item-info"><strong>${book.title}</strong><br>${book.author}</div>
-                    <button class="btn btn-wish btn-small" onclick='addWish(${JSON.stringify(book).replace(/'/g, "&apos;")})'>追加</button>
+                    <img src="${b.thumbnail}" class="book-thumb">
+                    <div class="item-info"><strong>${escapeHtml(b.title)}</strong><br>${escapeHtml(b.author)}</div>
+                    <button class="btn btn-wish btn-small" onclick='addWish(${JSON.stringify(b).replace(/'/g, "&apos;")})'>追加</button>
                 </div>`;
             }).join('');
         } catch(e) { target.innerHTML = "エラー"; }
     }
 
-    function addWish(book) {
-        wishlist.push({...book, date:"未購入", rating:0, impression:"", status:"未読", readDate:"", category:"", price:0});
+    function addWish(b) {
+        wishlist.push({...b, date:"未購入", rating:0, impression:"", status:"未読", readDate:"", category:"", price:0});
         saveData(); alert("追加しました");
     }
 
     async function addAmazon() {
         const url = document.getElementById('amazonUrlInput').value;
-        const status = document.getElementById('amazon-status');
         const match = url.match(/\/(?:dp|gp\/product|ASIN)\/([A-Z0-9]{10,13})/i);
         if(match) {
             const isbn = match[1];
-            status.innerText = "情報取得中...";
             try {
                 const res = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`);
-                const data = await res.json();
-                if(data && data[0]) {
-                    const info = data[0].summary;
-                    addWish({ title: info.title, author: info.author, thumbnail: info.cover, isbn: info.isbn });
+                const d = await res.json();
+                if(d && d[0]) {
+                    const s = d[0].summary;
+                    addWish({ title: s.title, author: s.author, thumbnail: s.cover, isbn: s.isbn });
                     document.getElementById('amazonUrlInput').value = "";
-                    status.innerText = "✅ 追加完了";
-                } else { alert("情報が見つかりませんでした"); }
-            } catch(e) { status.innerText = "❌ エラー"; }
-        } else { status.innerText = "❌ 有効なURLではありません"; }
+                }
+            } catch(e) { alert("取得失敗"); }
+        }
     }
 
     function addManual() {
         const title = document.getElementById('manualTitle').value;
-        if(!title) return alert("題名を入力してください");
+        if(!title) return alert("題名必須");
         addWish({ title, author: document.getElementById('manualAuthor').value, thumbnail: "", isbn: "" });
         document.getElementById('manualTitle').value = ""; document.getElementById('manualAuthor').value = "";
     }
 
-    // --- 共通・詳細・検索 ---
+    function purchaseBook(i) {
+        const b = wishlist[i]; b.date = new Date().toLocaleDateString('ja-JP'); b.status = "未読";
+        books.push(b); wishlist.splice(i, 1); saveData();
+    }
+
+    // --- 蔵書検索 ---
     function handleSearch() {
         const term = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = books.filter(b => (b.title + b.author + (b.category||"") + (b.impression||"")).toLowerCase().includes(term));
+        const filtered = books.map((b, i) => ({...b, originalIndex: i}))
+                              .filter(b => (b.title + b.author + (b.category||"") + (b.impression||"")).toLowerCase().includes(term));
+        
         document.getElementById('historyListUI').innerHTML = filtered.map((b) => {
-            const idx = books.indexOf(b);
             const statusClass = b.status === "読了" ? "status-read" : "";
             return `<div class="list-item">
-                <img src="${b.thumbnail || ''}" class="book-thumb">
+                <img src="${b.thumbnail || ''}" class="book-thumb" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI3MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5Ij5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
                 <div class="item-info">
-                    <span class="item-title">${b.title}</span>
+                    <span class="item-title">${escapeHtml(b.title)}</span>
                     <span class="status-badge ${statusClass}">${b.status || '未読'}</span>
                     <span style="color:var(--accent); font-size:0.75rem;">${"★".repeat(b.rating || 0)}</span>
-                    <div style="font-size:0.7rem; color:#64748b;">${b.author} ${b.category ? ' | ' + b.category : ''}</div>
+                    <div style="font-size:0.7rem; color:#64748b;">${escapeHtml(b.author)} ${b.category ? '| ' + escapeHtml(b.category) : ''}</div>
                 </div>
-                <button class="btn btn-outline btn-small" onclick="openEdit(${idx}, 'books')">詳細</button>
+                <button class="btn btn-outline btn-small" onclick="openEdit(${b.originalIndex}, 'books')">詳細</button>
             </div>`;
         }).reverse().join('');
     }
 
+    // --- 詳細編集モーダル操作 ---
     function openEdit(index, mode) {
         const b = (mode === 'books') ? books[index] : wishlist[index];
+        if(!b) return;
+
         document.getElementById('edit-index').value = index;
         document.getElementById('edit-mode').value = mode;
         document.getElementById('editThumb').src = b.thumbnail || "";
@@ -369,7 +363,9 @@
         document.getElementById('edit-status').value = b.status || "未読";
         document.getElementById('edit-read-date').value = b.readDate || "";
         document.getElementById('edit-category').value = b.category || "";
+        document.getElementById('edit-price').value = b.price || 0;
         document.getElementById('edit-impression').value = b.impression || "";
+        
         setRatingUI(b.rating || 0);
         document.getElementById('editModal').style.display = "flex";
     }
@@ -378,39 +374,47 @@
         const idx = document.getElementById('edit-index').value;
         const mode = document.getElementById('edit-mode').value;
         const target = (mode === 'books') ? books[idx] : wishlist[idx];
+        
         target.title = document.getElementById('edit-title').value;
         target.author = document.getElementById('edit-author').value;
         target.status = document.getElementById('edit-status').value;
         target.readDate = document.getElementById('edit-read-date').value;
         target.category = document.getElementById('edit-category').value;
+        target.price = document.getElementById('edit-price').value;
         target.impression = document.getElementById('edit-impression').value;
-        target.rating = parseInt(document.getElementById('edit-rating').value);
+        target.rating = parseInt(document.getElementById('edit-rating-val').value);
+        
         saveData(); closeModal();
     }
 
-    function moveToLibrary(i) {
-        const b = wishlist[i]; b.date = new Date().toLocaleDateString('ja-JP'); b.status = "未読";
-        books.push(b); wishlist.splice(i, 1); saveData();
+    function deleteEntry() {
+        if(confirm("本当に削除しますか？")) {
+            const idx = document.getElementById('edit-index').value;
+            const mode = document.getElementById('edit-mode').value;
+            if(mode === 'books') books.splice(idx,1); else wishlist.splice(idx,1);
+            saveData(); closeModal();
+        }
     }
 
-    function saveData() { localStorage.setItem('myBooks', JSON.stringify(books)); localStorage.setItem('myWishlist', JSON.stringify(wishlist)); updateUI(); }
-    function closeModal() { document.getElementById('editModal').style.display = "none"; }
-    function deleteEntry() { if(confirm("削除しますか？")) { const idx = document.getElementById('edit-index').value; if(document.getElementById('edit-mode').value === 'books') books.splice(idx,1); else wishlist.splice(idx,1); saveData(); closeModal(); } }
-    
     function initRatingEvents() {
         document.querySelectorAll('#ratingEdit span').forEach(star => {
             star.onclick = function() { setRatingUI(this.getAttribute('data-v')); };
         });
     }
-
     function setRatingUI(val) {
-        document.getElementById('edit-rating').value = val;
+        document.getElementById('edit-rating-val').value = val;
         document.querySelectorAll('#ratingEdit span').forEach(s => s.classList.toggle('selected', s.getAttribute('data-v') <= val));
     }
-
+    function closeModal() { document.getElementById('editModal').style.display = "none"; }
     function exportToFile() {
         const blob = new Blob([JSON.stringify({books, wishlist}, null, 2)], {type:'application/json'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'library_data.json'; a.click();
+    }
+    function escapeHtml(str) {
+        if(!str) return "";
+        return str.replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
     }
 </script>
 </body>
