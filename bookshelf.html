@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>蔵書検索アプリ「ブックシェルフ」</title>
+  <!-- バーコードスキャン用ライブラリ -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    :root {
+      --primary-color: #007BFF;
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --text-color: #333;
+    }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+    .screen {
+      display: none;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .screen.active {
+      display: block;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .stats {
+      font-size: 1.2em;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: center;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+    .btn:hover { background: #0056b3; }
+    .btn-back { background: #6c757d; width: auto; display: inline-block; padding: 8px 15px; }
+    .btn-delete { background: #dc3545; width: auto; padding: 6px 12px; font-size: 14px; margin: 0; }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    
+    .nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+    .nav-header h2 { margin: 0; font-size: 1.5em; }
+
+    /* 本のリスト表示用 */
+    .book-item {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding: 15px 0;
+    }
+    .book-item:last-child { border-bottom: none; }
+    .book-item img {
+      width: 60px;
+      height: auto;
+      margin-right: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .book-info {
+      flex-grow: 1;
+    }
+    .book-info strong { display: block; font-size: 1.1em; margin-bottom: 5px; }
+    .book-info small { color: #666; }
+    .empty-msg { text-align: center; color: #888; }
+  </style>
+</head>
+<body>
+
+  <!-- 4. トップ画面 -->
+  <div id="screen-top" class="screen active">
+    <h1>📚 ブックシェルフ</h1>
+    <div class="card stats">
+      <p>蔵書数: <strong id="count-collection" style="color: var(--primary-color);">0</strong> 冊</p>
+      <p>ほしい本: <strong id="count-wish" style="color: #ff9800;">0</strong> 冊</p>
+    </div>
+    <button class="btn" onclick="showScreen('screen-scan')">📷 1. バーコードスキャン</button>
+    <button class="btn" onclick="showScreen('screen-wish')" style="background-color: #ff9800;">⭐ 2. ウィッシュリスト</button>
+    <button class="btn" onclick="showScreen('screen-collection')" style="background-color: #28a745;">📖 3. 蔵書一覧・検索そういち</button>
+  </div>
+
+  <!-- 1. バーコードスキャン画面 -->
+  <div id="screen-scan" class="screen">
+    <div class="nav-header">
+      <h2>バーコードスキャン</h2>
+      <button class="btn btn-back" onclick="showScreen('screen-top')">戻る</button>
+    </div>
+    <div class="card">
+      <p style="font-size: 0.9em; color:#555;">本の裏にある上段のバーコード（978または979から始まるISBN）を写してください。</p>
+      <div id="reader" style="width:100%;"></div>
+    </div>
+    <div id="scan-result" class="card" style="display:none;"></div>
+  </div>
+
+  <!-- 2. ウィッシュリスト画面 -->
+  <div id="screen-wish" class="screen">
+    <div class="nav-header">
+      <h2>ウィッシュリスト</h2>
+      <button class="btn btn-back" onclick="showScreen('screen-top')">戻る</button>
+    </div>
+    
+    <!-- キーワード検索 -->
+    <div class="card">
+      <h3>🔍 本を検索して追加</h3>
+      <input type="text" id="wish-search-input" placeholder="本のタイトルや著者名を入力">
+      <button class="btn" onclick="searchWishBook()">検索</button>
+      <div id="wish-search-results"></div>
+    </div>
+
+    <!-- 手動追加 -->
+    <div class="card">
+      <h3>✍️ 手動で追加</h3>
+      <input type="text" id="manual-title" placeholder="タイトル (必須)">
+      <input type="text" id="manual-author" placeholder="著者名">
+      <button class="btn" onclick="addManualWish()" style="background-color: #6c757d;">手動で追加する</button>
+    </div>
+
+    <!-- ウィッシュリスト一覧 -->
+    <div class="card">
+      <h3>⭐ ウィッシュリスト一覧</h3>
+      <div id="wish-list-container"></div>
+    </div>
+  </div>
+
+  <!-- 3. 蔵書一覧・検索画面 -->
+  <div id="screen-collection" class="screen">
+    <div class="nav-header">
+      <h2>蔵書一覧・検索</h2>
+      <button class="btn btn-back" onclick="showScreen('screen-top')">戻る</button>
+    </div>
+    <div class="card">
+      <input type="text" id="collection-search-input" placeholder="🔍 蔵書の中からタイトルや著者名で検索" oninput="renderCollection()">
+    </div>
+    <div class="card" id="collection-list-container"></div>
+  </div>
+
+  <script>
+    // --- データ管理 ---
+    // ローカルストレージからデータを読み込む（なければ空の配列）
+    let collection = JSON.parse(localStorage.getItem('bookshelf_collection')) ||[];
+    let wishlist = JSON.parse(localStorage.getItem('bookshelf_wishlist')) ||[];
+
+    // データを保存してトップ画面のカウントを更新
+    function saveData() {
+      localStorage.setItem('bookshelf_collection', JSON.stringify(collection));
+      localStorage.setItem('bookshelf_wishlist', JSON.stringify(wishlist));
+      updateCounts();
+    }
+
+    // --- 画面遷移管理 ---
+    let html5QrcodeScanner = null;
+
+    function showScreen(screenId) {
+      // 全画面を非表示
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      
+      // スキャン画面以外に移動した場合はカメラを停止
+      if (screenId !== 'screen-scan') {
+        stopScanner();
+      }
+
+      // 指定された画面を表示
+      document.getElementById(screenId).classList.add('active');
+
+      // 画面ごとの初期化処理
+      if (screenId === 'screen-top') {
+        updateCounts();
+      } else if (screenId === 'screen-scan') {
+        startScanner();
+      } else if (screenId === 'screen-wish') {
+        renderWishlist();
+      } else if (screenId === 'screen-collection') {
+        document.getElementById('collection-search-input').value = ""; // 検索窓リセット
+        renderCollection();
+      }
+    }
+
+    // --- 4. トップ画面 ---
+    function updateCounts() {
+      document.getElementById('count-collection').innerText = collection.length;
+      document.getElementById('count-wish').innerText = wishlist.length;
+    }
+
+    // --- 1. バーコードスキャン機能 ---
+    function startScanner() {
+      if (html5QrcodeScanner) return; // すでに起動中なら何もしない
+      
+      // カメラの設定
+      html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", { fps: 10, qrbox: { width: 250, height: 150 } }, false
+      );
+      html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().then(() => {
+          html5QrcodeScanner = null;
+        }).catch(err => console.error(err));
+      }
+      document.getElementById('scan-result').style.display = 'none';
+    }
+
+    function onScanSuccess(decodedText) {
+      // 日本の書籍（ISBN）は通常978か979から始まる
+      if (decodedText.startsWith("978") || decodedText.startsWith("979")) {
+        stopScanner(); // スキャン成功したらカメラを止める
+        fetchBookByISBN(decodedText);
+      }
+    }
+
+    function onScanFailure(error) {
+      // スキャン中は常にエラーが出るので無視でOK
+    }
+
+    // Google Books APIからISBNで検索
+    async function fetchBookByISBN(isbn) {
+      const resultDiv = document.getElementById('scan-result');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = "<p>インターネットから本の情報を取得中...</p>";
+      
+      try {
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          const info = data.items[0].volumeInfo;
+          const title = info.title || "タイトル不明";
+          const author = info.authors ? info.authors.join(", ") : "著者不明";
+          const thumbnail = info.imageLinks ? info.imageLinks.thumbnail : "";
+          
+          resultDiv.innerHTML = `
+            <h3>取得結果</h3>
+            <div class="book-item">
+              ${thumbnail ? `<img src="${thumbnail}">` : `<div style="width:60px;height:80px;background:#ccc;margin-right:15px;"></div>`}
+              <div class="book-info">
+                <strong>${escapeHtml(title)}</strong>
+                <small>${escapeHtml(author)}</small>
+              </div>
+            </div>
+            <button class="btn" style="background-color: #28a745;" onclick="addToCollection('${isbn}', '${escapeHtml(title)}', '${escapeHtml(author)}', '${thumbnail}')">この本を蔵書に登録する</button>
+            <button class="btn btn-back" onclick="resetScanner()">もう一度スキャンする</button>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <p>本の情報（ISBN: ${isbn}）が見つかりませんでした。</p>
+            <button class="btn" onclick="resetScanner()">再スキャン</button>
+          `;
+        }
+      } catch (e) {
+        resultDiv.innerHTML = `
+          <p>通信エラーが発生しました。</p>
+          <button class="btn" onclick="resetScanner()">再スキャン</button>
+        `;
+      }
+    }
+
+    function resetScanner() {
+      document.getElementById('scan-result').style.display = 'none';
+      startScanner();
+    }
+
+    function addToCollection(isbn, title, author, thumbnail) {
+      collection.push({ id: Date.now(), isbn, title, author, thumbnail });
+      saveData();
+      alert("蔵書に登録しました！");
+      showScreen('screen-top');
+    }
+
+    // --- 2. ウィッシュリスト機能 ---
+    // キーワード検索
+    async function searchWishBook() {
+      const query = document.getElementById('wish-search-input').value;
+      if (!query) return;
+      const resultsDiv = document.getElementById('wish-search-results');
+      resultsDiv.innerHTML = "<p>検索中...</p>";
+      
+      try {
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`);
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          resultsDiv.innerHTML = "";
+          data.items.forEach(item => {
+            const info = item.volumeInfo;
+            const title = info.title || "タイトル不明";
+            const author = info.authors ? info.authors.join(", ") : "著者不明";
+            const thumbnail = info.imageLinks ? info.imageLinks.thumbnail : "";
+            
+            const div = document.createElement('div');
+            div.className = "book-item";
+            div.innerHTML = `
+              ${thumbnail ? `<img src="${thumbnail}">` : `<div style="width:60px;height:80px;background:#ccc;margin-right:15px;"></div>`}
+              <div class="book-info">
+                <strong>${escapeHtml(title)}</strong>
+                <small>${escapeHtml(author)}</small>
+              </div>
+              <button class="btn btn-back" style="background-color: #ff9800; color: white;" onclick="addToWishlist('${escapeHtml(title)}', '${escapeHtml(author)}', '${thumbnail}')">追加</button>
+            `;
+            resultsDiv.appendChild(div);
+          });
+        } else {
+          resultsDiv.innerHTML = "<p>見つかりませんでした。</p>";
+        }
+      } catch(e) {
+        resultsDiv.innerHTML = "<p>エラーが発生しました。</p>";
+      }
+    }
+
+    // 手動追加
+    function addManualWish() {
+      const title = document.getElementById('manual-title').value;
+      const author = document.getElementById('manual-author').value;
+      if (!title) { alert("タイトルを入力してください"); return; }
+      
+      addToWishlist(title, author, "");
+      document.getElementById('manual-title').value = "";
+      document.getElementById('manual-author').value = "";
+    }
+
+    // ウィッシュリストへ登録
+    function addToWishlist(title, author, thumbnail) {
+      wishlist.push({ id: Date.now(), title, author, thumbnail });
+      saveData();
+      alert("ウィッシュリストに追加しました！");
+      renderWishlist();
+      document.getElementById('wish-search-results').innerHTML = "";
+      document.getElementById('wish-search-input').value = "";
+    }
+
+    // ウィッシュリスト表示
+    function renderWishlist() {
+      const container = document.getElementById('wish-list-container');
+      container.innerHTML = "";
+      
+      if(wishlist.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>ウィッシュリストは空です。</p>";
+        return;
+      }
+      
+      wishlist.forEach((book, index) => {
+        const div = document.createElement('div');
+        div.className = "book-item";
+        div.innerHTML = `
+          ${book.thumbnail ? `<img src="${book.thumbnail}">` : `<div style="width:60px;height:80px;background:#eee;margin-right:15px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa;">画像なし</div>`}
+          <div class="book-info">
+            <strong>${book.title}</strong>
+            <small>${book.author}</small>
+          </div>
+          <button class="btn btn-delete" onclick="removeWish(${index})">削除</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function removeWish(index) {
+      if (confirm("ウィッシュリストから削除しますか？")) {
+        wishlist.splice(index, 1);
+        saveData();
+        renderWishlist();
+      }
+    }
+
+    // --- 3. 蔵書一覧・検索機能 ---
+    function renderCollection() {
+      const query = document.getElementById('collection-search-input').value.toLowerCase();
+      const container = document.getElementById('collection-list-container');
+      container.innerHTML = "";
+      
+      // 検索フィルター
+      const filtered = collection.filter(book => 
+        book.title.toLowerCase().includes(query) || 
+        book.author.toLowerCase().includes(query)
+      );
+
+      if(filtered.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>該当する蔵書がありません。</p>";
+        return;
+      }
+
+      filtered.forEach((book, index) => {
+        const div = document.createElement('div');
+        div.className = "book-item";
+        // 表示用の元のインデックスを取得
+        const originalIndex = collection.indexOf(book);
+        
+        div.innerHTML = `
+          ${book.thumbnail ? `<img src="${book.thumbnail}">` : `<div style="width:60px;height:80px;background:#eee;margin-right:15px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa;">画像なし</div>`}
+          <div class="book-info">
+            <strong>${book.title}</strong>
+            <small>${book.author}</small>
+            ${book.isbn ? `<br><small style="font-size: 0.8em; color: #999;">ISBN: ${book.isbn}</small>` : ''}
+          </div>
+          <button class="btn btn-delete" onclick="removeCollection(${originalIndex})">削除</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function removeCollection(index) {
+      if (confirm("蔵書から削除しますか？")) {
+        collection.splice(index, 1);
+        saveData();
+        renderCollection();
+      }
+    }
+
+    // --- 補助関数 (サニタイズ) ---
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // --- 初期化 ---
+    window.onload = () => {
+      updateCounts();
+    };
+  </script>
+</body>
+</html>
