@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v5</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v6</title>
   <!-- バーコードスキャン用ライブラリ -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
@@ -61,8 +61,7 @@
     .book-info strong { display: block; font-size: 1.1em; margin-bottom: 5px; color: #2c3e50; white-space: normal; word-break: break-all; }
     .book-info small { color: #666; display: block; line-height: 1.4; white-space: normal; word-break: break-all; }
     .empty-msg { text-align: center; color: #888; }
-    .action-buttons { display: flex; gap: 10px; margin-top: 10px; }
-
+    
     /* 一括操作エリア用スタイル */
     .bulk-action-area {
       display: flex; justify-content: space-between; align-items: center;
@@ -90,7 +89,7 @@
     .modal-content {
       background-color: #fff; margin: 10% auto; padding: 20px;
       border-radius: 10px; width: 90%; max-width: 500px; box-sizing: border-box; position: relative;
-      max-height: 85vh; overflow-y: auto; /* 項目の増加に伴いスクロール可能に設定 */
+      max-height: 85vh; overflow-y: auto; 
     }
     .close-btn {
       color: #aaa; position: absolute; top: 15px; right: 20px;
@@ -107,7 +106,7 @@
 
   <!-- トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50;">📚 ブックシェルフv5</h1>
+    <h1 style="color: #2c3e50;">📚 ブックシェルフv6</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2c5282;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #8a4b08;">0</strong> 冊</p>
@@ -182,8 +181,18 @@
 
     <!-- ウィッシュリスト一覧 -->
     <div class="card">
-      <h3>⭐ ウィッシュリスト一覧</h3>
-      <!-- 一括削除エリア -->
+      <h3 style="margin-bottom: 15px;">⭐ ウィッシュリスト一覧</h3>
+      
+      <!-- ★追加機能：ウィッシュリストの検索・ソート -->
+      <input type="text" id="wishlist-filter-input" class="form-control" placeholder="🔍 ウィッシュリストの中から検索" oninput="renderWishlist()">
+      <select id="wishlist-sort-select" class="form-control" onchange="renderWishlist()" style="margin-bottom: 15px;">
+        <option value="default">並び替え: 登録が新しい順</option>
+        <option value="titleAsc">並び替え: タイトル (あ〜ん)</option>
+        <option value="titleDesc">並び替え: タイトル (ん〜あ)</option>
+        <option value="authorAsc">並び替え: 著者名 (あ〜ん)</option>
+        <option value="authorDesc">並び替え: 著者名 (ん〜あ)</option>
+      </select>
+
       <div class="bulk-action-area" id="wishlist-bulk-area" style="display:none;">
         <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555;">
           <input type="checkbox" id="selectAllWishlist" onchange="toggleSelectAll('wishlist')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
@@ -204,8 +213,6 @@
     
     <div class="card">
       <input type="text" id="collection-search-input" class="form-control" placeholder="🔍 蔵書の中からタイトルや著者名で検索" oninput="renderCollection()">
-      
-      <!-- ★追加機能：ソート（並び替え）用プルダウン -->
       <select id="collection-sort-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0;">
         <option value="default">並び替え: 登録が新しい順</option>
         <option value="titleAsc">並び替え: タイトル (あ〜ん)</option>
@@ -216,7 +223,6 @@
     </div>
     
     <div class="card">
-      <!-- 一括削除エリア -->
       <div class="bulk-action-area" id="collection-bulk-area" style="display:none;">
         <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555;">
           <input type="checkbox" id="selectAllCollection" onchange="toggleSelectAll('collection')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
@@ -246,13 +252,12 @@
     </div>
   </div>
 
-  <!-- ポップアップ (モーダル画面) ★編集機能拡充 -->
+  <!-- ポップアップ (モーダル画面) ★共通化・読了日追加 -->
   <div id="book-modal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
       <h3 style="margin-bottom: 15px; margin-top: 0; text-align: left; border-bottom: 2px solid #eee; padding-bottom: 10px;">📝 詳細・編集</h3>
       
-      <!-- タイトル・著者などの編集フィールドを追加 -->
       <label style="font-weight:bold; font-size:0.9em;">タイトル</label>
       <input type="text" id="modal-edit-title" class="form-control">
       
@@ -280,24 +285,31 @@
             </select>
           </div>
           <div>
-            <label style="font-weight:bold; font-size:0.9em;">評価</label>
-            <select id="modal-rating" class="form-control" style="margin-bottom: 0;">
-              <option value="0">未評価</option>
-              <option value="1">★1</option>
-              <option value="2">★2</option>
-              <option value="3">★3</option>
-              <option value="4">★4</option>
-              <option value="5">★5 (最高)</option>
-            </select>
+            <!-- ★追加：読了日 -->
+            <label style="font-weight:bold; font-size:0.9em;">読了日</label>
+            <input type="date" id="modal-read-date" class="form-control" style="margin-bottom: 0;" onchange="onReadDateChange()">
           </div>
+        </div>
+        <div style="margin-top: 10px;">
+          <label style="font-weight:bold; font-size:0.9em;">評価</label>
+          <select id="modal-rating" class="form-control" style="margin-bottom: 0;">
+            <option value="0">未評価</option>
+            <option value="1">★1</option>
+            <option value="2">★2</option>
+            <option value="3">★3</option>
+            <option value="4">★4</option>
+            <option value="5">★5 (最高)</option>
+          </select>
         </div>
         <label style="font-weight:bold; font-size:0.9em; margin-top: 10px; display:block;">読んだ感想・メモ</label>
         <textarea id="modal-review" class="form-control" rows="3" placeholder="感想やメモを入力..."></textarea>
       </div>
       
-      <div class="action-buttons" style="justify-content: space-between; margin-top: 20px;">
-        <button class="btn" style="background-color: var(--primary-color); flex:1; margin-right: 10px; margin-bottom: 0;" onclick="saveModal()">保存して閉じる</button>
-        <button class="btn btn-delete" style="flex:0 0 auto;" onclick="deleteFromModal()">蔵書から削除</button>
+      <div class="action-buttons" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+        <button class="btn" style="background-color: var(--primary-color); flex: 1; margin: 0;" onclick="saveModal()">保存する</button>
+        <!-- ウィッシュリストから開いた時のみ表示されるボタン -->
+        <button id="modal-move-btn" class="btn" style="background-color: #27ae60; flex: 1; margin: 0; display: none;" onclick="moveFromModal()">📖 蔵書へ移動</button>
+        <button class="btn btn-delete" style="flex: 0 0 auto; margin: 0;" onclick="deleteFromModal()">削除</button>
       </div>
     </div>
   </div>
@@ -394,6 +406,20 @@
       return `<img src="${src}" onerror="this.onerror=null; this.src='${placeholder}';" style="width:60px;height:80px;object-fit:cover;margin-right:15px;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">`;
     }
 
+    // 日付フォーマットの相互変換（インポート時などのため）
+    function formatDateForInput(dateStr) {
+      if (!dateStr || dateStr === "未購入") return "";
+      if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return "";
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      } catch(e) { return ""; }
+    }
+
     function isDuplicateInCollection(isbn, title, author) {
       if (!Array.isArray(collection)) return false;
       return collection.some(book => {
@@ -437,12 +463,18 @@
           if (input) input.value = ""; 
           initCameraList();
         } else if (screenId === 'screen-wish') {
+          // 遷移時にフィルターとソートをリセット
+          const filterInput = document.getElementById('wishlist-filter-input');
+          const sortInput = document.getElementById('wishlist-sort-select');
+          if (filterInput) filterInput.value = "";
+          if (sortInput) sortInput.value = "default";
           renderWishlist();
         } else if (screenId === 'screen-collection') {
+          // 遷移時にフィルターとソートをリセット
           const searchInput = document.getElementById('collection-search-input');
           const sortInput = document.getElementById('collection-sort-select');
           if (searchInput) searchInput.value = ""; 
-          if (sortInput) sortInput.value = "default"; // 画面遷移時にソート状態をリセット
+          if (sortInput) sortInput.value = "default";
           renderCollection();
         }
       } catch (err) {
@@ -680,7 +712,7 @@
       }
       collection.unshift({ 
         id: Date.now(), isbn, title, author, publisher, thumbnail,
-        status: 'unread', review: '', rating: 0
+        status: 'unread', readDate: '', review: '', rating: 0
       });
       saveData();
       alert("蔵書に登録しました！");
@@ -804,12 +836,11 @@
     }
 
     function addToWishlist(title, author, publisher, thumbnail, isbn) {
-      // ★追加：蔵書リストにある場合はウィッシュリストへの追加をブロックする
+      // 蔵書リストとの重複チェック
       if (isDuplicateInCollection(isbn, title, author)) {
         alert("この本は既に「蔵書リスト」に登録されているため、ほしい本(ウィッシュリスト)には追加できません。");
         return;
       }
-      // ウィッシュリスト内の重複チェック
       if (isDuplicateInWishlist(isbn, title, author)) {
         alert("この本は既にウィッシュリストに登録されています。");
         return;
@@ -818,7 +849,6 @@
       saveData();
       alert("ウィッシュリストに追加しました！");
       
-      // もしスキャン画面から呼ばれた場合はウィッシュリスト画面へ遷移
       if (document.getElementById('screen-scan').classList.contains('active')) {
         showScreen('screen-wish');
       } else {
@@ -830,16 +860,39 @@
       }
     }
 
+    // ★ウィッシュリストの検索・ソート・右横ボタン配置
     function renderWishlist() {
+      const filterInput = document.getElementById('wishlist-filter-input');
+      const sortSelect = document.getElementById('wishlist-sort-select');
       const container = document.getElementById('wish-list-container');
       const bulkArea = document.getElementById('wishlist-bulk-area');
       const selectAll = document.getElementById('selectAllWishlist');
       
       if (!container) return;
+      const query = filterInput ? filterInput.value.toLowerCase() : "";
+      const sortType = sortSelect ? sortSelect.value : "default";
+      
       container.innerHTML = "";
       
-      if(wishlist.length === 0) {
-        container.innerHTML = "<p class='empty-msg'>ウィッシュリストは空です。</p>"; 
+      let filtered = wishlist.filter(b => {
+        const t = b.title ? b.title.toLowerCase() : "";
+        const a = b.author ? b.author.toLowerCase() : "";
+        const p = b.publisher ? b.publisher.toLowerCase() : "";
+        return t.includes(query) || a.includes(query) || p.includes(query);
+      });
+
+      if (sortType === "titleAsc") {
+        filtered.sort((a, b) => (a.title || "").localeCompare(b.title || "", 'ja'));
+      } else if (sortType === "titleDesc") {
+        filtered.sort((a, b) => (b.title || "").localeCompare(a.title || "", 'ja'));
+      } else if (sortType === "authorAsc") {
+        filtered.sort((a, b) => (a.author || "").localeCompare(b.author || "", 'ja'));
+      } else if (sortType === "authorDesc") {
+        filtered.sort((a, b) => (b.author || "").localeCompare(a.author || "", 'ja'));
+      }
+
+      if(filtered.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>該当する本がありません。</p>"; 
         if(bulkArea) bulkArea.style.display = 'none';
         return;
       }
@@ -847,24 +900,24 @@
       if(bulkArea) bulkArea.style.display = 'flex';
       if(selectAll) selectAll.checked = false;
       
-      wishlist.forEach((book, index) => {
+      filtered.forEach((book) => {
+        const originalIndex = wishlist.indexOf(book);
         const div = document.createElement('div');
         div.className = "book-item-container";
         div.innerHTML = `
-          <div style="display: flex; align-items: stretch;">
+          <div style="display: flex; align-items: center;">
             <div style="display:flex; align-items:center; padding-right:15px;">
               <input type="checkbox" class="wishlist-checkbox" value="${book.id}" onchange="updateSelectAllCheckbox('wishlist')" style="width:20px;height:20px; cursor:pointer;">
             </div>
-            <div style="flex-grow: 1; min-width:0;">
-              <div class="book-header">
+            <div style="flex-grow: 1; min-width:0; display: flex; align-items: center; justify-content: space-between;">
+              <div class="book-header" style="flex-grow: 1; min-width: 0;">
                 ${getThumbnailHtml(book.thumbnail)}
                 <div class="book-info">
                   <strong>${escapeHtml(book.title)}</strong><small>著者: ${escapeHtml(book.author)}</small><small>出版社: ${escapeHtml(book.publisher || '不明')}</small>
                 </div>
               </div>
-              <div class="action-buttons">
-                <button class="btn" style="background-color: #27ae60; margin:0; flex:1;" onclick="moveToCollection(${index})">📖 蔵書へ移動</button>
-                <button class="btn btn-delete" style="flex:0 0 auto;" onclick="removeWish(${index})">削除</button>
+              <div style="margin-left: 10px; flex-shrink: 0;">
+                <button class="btn" style="width: auto; padding: 8px 12px; margin: 0; background-color: var(--primary-color);" onclick="openModal(${originalIndex}, 'wishlist')">📝 編集</button>
               </div>
             </div>
           </div>
@@ -873,28 +926,10 @@
       });
     }
 
-    function moveToCollection(index) {
-      const book = wishlist[index];
-      if (!book) return;
-      if (isDuplicateInCollection(book.isbn, book.title, book.author)) {
-        if (!confirm("この本は既に蔵書リストに登録されているようです。それでも移動しますか？")) return;
-      }
-      collection.unshift({ ...book, id: Date.now(), status: 'unread', review: '', rating: 0 });
-      wishlist.splice(index, 1);
-      saveData();
-      renderWishlist();
-      alert("蔵書リストへ移動しました！");
-    }
-
-    function removeWish(index) {
-      if (confirm("ウィッシュリストから削除しますか？")) {
-        wishlist.splice(index, 1); saveData(); renderWishlist();
-      }
-    }
-
     // ==========================================
     // 3. 蔵書一覧・検索・ソート機能 & 編集モーダル
     // ==========================================
+    // ★蔵書一覧の右横ボタン配置
     function renderCollection() {
       const searchInput = document.getElementById('collection-search-input');
       const sortSelect = document.getElementById('collection-sort-select');
@@ -915,7 +950,6 @@
         return t.includes(query) || a.includes(query) || p.includes(query);
       });
 
-      // ★追加：ソート（並び替え）処理
       if (sortType === "titleAsc") {
         filtered.sort((a, b) => (a.title || "").localeCompare(b.title || "", 'ja'));
       } else if (sortType === "titleDesc") {
@@ -936,9 +970,7 @@
       if(selectAll) selectAll.checked = false;
 
       filtered.forEach((book) => {
-        // 現在の book が元の collection 配列のどこにいるか取得（編集・削除のため）
         const originalIndex = collection.indexOf(book);
-        
         const div = document.createElement('div');
         div.className = "book-item-container";
         
@@ -947,21 +979,25 @@
         let statusBadge = book.status === 'read' 
           ? `<span style="background:#27ae60; color:white; padding:2px 6px; border-radius:4px; font-size:12px;">既読</span>` 
           : `<span style="background:#7f8c8d; color:white; padding:2px 6px; border-radius:4px; font-size:12px;">未読</span>`;
+          
+        let readDateBadge = (book.status === 'read' && book.readDate) ? `<small style="display:inline-block; margin-left:10px; color:#555;">読了: ${book.readDate.replace(/-/g, '/')}</small>` : "";
 
         div.innerHTML = `
-          <div style="display: flex; align-items: stretch;">
+          <div style="display: flex; align-items: center;">
             <div style="display:flex; align-items:center; padding-right:15px;">
               <input type="checkbox" class="collection-checkbox" value="${book.id}" onchange="updateSelectAllCheckbox('collection')" style="width:20px;height:20px; cursor:pointer;">
             </div>
-            <div style="flex-grow: 1; min-width:0;">
-              <div class="book-header">
+            <div style="flex-grow: 1; min-width:0; display: flex; align-items: center; justify-content: space-between;">
+              <div class="book-header" style="flex-grow: 1; min-width: 0;">
                 ${getThumbnailHtml(book.thumbnail)}
                 <div class="book-info">
                   <strong>${escapeHtml(book.title)}</strong><small>著者: ${escapeHtml(book.author)}</small><small>出版社: ${escapeHtml(book.publisher || '不明')}</small>
-                  <div style="margin-top:8px;">${statusBadge}${ratingStar}</div>
+                  <div style="margin-top:8px;">${statusBadge}${ratingStar}${readDateBadge}</div>
                 </div>
               </div>
-              <button class="btn" style="margin-top:10px; margin-bottom:0; padding:8px; background-color: var(--primary-color);" onclick="openModal(${originalIndex})">📝 詳細・編集</button>
+              <div style="margin-left: 10px; flex-shrink: 0;">
+                <button class="btn" style="width: auto; padding: 8px 12px; margin: 0; background-color: var(--primary-color);" onclick="openModal(${originalIndex}, 'collection')">📝 編集</button>
+              </div>
             </div>
           </div>
         `;
@@ -969,24 +1005,37 @@
       });
     }
 
+    // --- 共通編集モーダル ---
     let currentEditIndex = -1;
+    let currentEditType = 'collection';
 
-    function openModal(index) {
-      const book = collection[index];
-      if (!book) return;
+    function openModal(index, type) {
+      currentEditType = type;
       currentEditIndex = index;
+      const book = type === 'collection' ? collection[index] : wishlist[index];
+      if (!book) return;
       
-      // ★追加：基本情報も編集できるように値をセット
       document.getElementById('modal-edit-title').value = book.title || "";
       document.getElementById('modal-edit-author').value = book.author || "";
       document.getElementById('modal-edit-publisher').value = book.publisher || "";
       document.getElementById('modal-edit-isbn').value = book.isbn || "";
       
       document.getElementById('modal-status').value = book.status || 'unread';
+      document.getElementById('modal-read-date').value = formatDateForInput(book.readDate || book.date) || "";
       document.getElementById('modal-rating').value = parseInt(book.rating) || '0';
-      document.getElementById('modal-review').value = book.review || '';
+      document.getElementById('modal-review').value = book.review || book.impression || '';
+      
+      document.getElementById('modal-move-btn').style.display = type === 'wishlist' ? 'block' : 'none';
       
       document.getElementById('book-modal').style.display = 'block';
+    }
+
+    // ★追加：読了日カレンダーを変更したときに自動で既読にする
+    function onReadDateChange() {
+      const dateVal = document.getElementById('modal-read-date').value;
+      if (dateVal) {
+        document.getElementById('modal-status').value = 'read';
+      }
     }
 
     function closeModal() { 
@@ -995,26 +1044,65 @@
     }
 
     function saveModal() {
-      if (currentEditIndex > -1 && collection[currentEditIndex]) {
-        // ★追加：基本情報の編集を保存
-        collection[currentEditIndex].title = document.getElementById('modal-edit-title').value.trim();
-        collection[currentEditIndex].author = document.getElementById('modal-edit-author').value.trim();
-        collection[currentEditIndex].publisher = document.getElementById('modal-edit-publisher').value.trim();
-        collection[currentEditIndex].isbn = document.getElementById('modal-edit-isbn').value.trim();
-        
-        collection[currentEditIndex].status = document.getElementById('modal-status').value;
-        collection[currentEditIndex].rating = parseInt(document.getElementById('modal-rating').value) || 0;
-        collection[currentEditIndex].review = document.getElementById('modal-review').value;
-        saveData(); 
-        renderCollection();
+      if (currentEditIndex > -1) {
+        const list = currentEditType === 'collection' ? collection : wishlist;
+        const book = list[currentEditIndex];
+        if (book) {
+          book.title = document.getElementById('modal-edit-title').value.trim();
+          book.author = document.getElementById('modal-edit-author').value.trim();
+          book.publisher = document.getElementById('modal-edit-publisher').value.trim();
+          book.isbn = document.getElementById('modal-edit-isbn').value.trim();
+          
+          book.status = document.getElementById('modal-status').value;
+          book.readDate = document.getElementById('modal-read-date').value;
+          book.rating = parseInt(document.getElementById('modal-rating').value) || 0;
+          book.review = document.getElementById('modal-review').value;
+          
+          saveData(); 
+          if (currentEditType === 'collection') renderCollection();
+          else renderWishlist();
+        }
       }
       closeModal();
     }
 
+    function moveFromModal() {
+      if (currentEditType !== 'wishlist' || currentEditIndex < 0) return;
+      const book = wishlist[currentEditIndex];
+      
+      // 入力中の最新情報をブックに反映
+      book.title = document.getElementById('modal-edit-title').value.trim();
+      book.author = document.getElementById('modal-edit-author').value.trim();
+      book.publisher = document.getElementById('modal-edit-publisher').value.trim();
+      book.isbn = document.getElementById('modal-edit-isbn').value.trim();
+      book.status = document.getElementById('modal-status').value;
+      book.readDate = document.getElementById('modal-read-date').value;
+      book.rating = parseInt(document.getElementById('modal-rating').value) || 0;
+      book.review = document.getElementById('modal-review').value;
+
+      if (isDuplicateInCollection(book.isbn, book.title, book.author)) {
+        if (!confirm("この本は既に蔵書リストに登録されているようです。それでも移動しますか？")) return;
+      }
+      
+      collection.unshift({ ...book, id: Date.now() });
+      wishlist.splice(currentEditIndex, 1);
+      saveData();
+      renderWishlist();
+      closeModal();
+      alert("蔵書リストへ移動しました！");
+    }
+
     function deleteFromModal() {
-      if (confirm("本当にこの本を蔵書から削除しますか？")) {
-        collection.splice(currentEditIndex, 1);
-        saveData(); renderCollection(); closeModal();
+      const msg = currentEditType === 'collection' ? "蔵書から削除しますか？" : "ウィッシュリストから削除しますか？";
+      if (confirm(msg)) {
+        if (currentEditType === 'collection') {
+          collection.splice(currentEditIndex, 1);
+          saveData(); renderCollection();
+        } else {
+          wishlist.splice(currentEditIndex, 1);
+          saveData(); renderWishlist();
+        }
+        closeModal();
       }
     }
 
@@ -1026,11 +1114,12 @@
     function exportJSON() {
       try {
         const booksData = collection.map(b => {
-          const { id, review, status, ...rest } = b; 
+          const { id, review, status, readDate, ...rest } = b; 
           return {
             ...rest,
             title: b.title || "", author: b.author || "", publisher: b.publisher || "",
-            isbn: b.isbn || "", date: b.date || "", 
+            isbn: b.isbn || "", 
+            date: b.readDate ? b.readDate.replace(/-/g, '/') : (b.date || ""), 
             rating: parseInt(b.rating) || 0,
             impression: b.review || "", thumbnail: b.thumbnail || "",
             status: b.status === 'read' ? "既読" : "未読"
@@ -1038,11 +1127,12 @@
         });
 
         const wishlistData = wishlist.map(b => {
-          const { id, review, status, ...rest } = b; 
+          const { id, review, status, readDate, ...rest } = b; 
           return {
             ...rest,
             title: b.title || "", author: b.author || "", publisher: b.publisher || "",
-            isbn: b.isbn || "", date: b.date || "未購入", 
+            isbn: b.isbn || "", 
+            date: b.readDate ? b.readDate.replace(/-/g, '/') : (b.date || "未購入"), 
             rating: parseInt(b.rating) || 0,
             impression: b.review || "", thumbnail: b.thumbnail || "",
             status: b.status || "未読"
@@ -1082,12 +1172,19 @@
                 if (item.status === '既読' || item.status === '読了' || parseInt(item.rating) > 0 || (typeof item.impression === 'string' && item.impression.length > 0)) {
                   status = 'read';
                 }
+                
+                let readDate = "";
+                if (item.date && item.date !== "未購入") {
+                  readDate = formatDateForInput(item.date);
+                }
+
                 collection.push({
                   ...item,
                   id: Date.now() + i,
                   isbn: item.isbn || "", title: item.title || "タイトル不明",
                   author: item.author || "著者不明", publisher: item.publisher || "",
                   thumbnail: item.thumbnail || "", status: status,
+                  readDate: readDate,
                   rating: parseInt(item.rating) || 0, review: item.impression || ""
                 });
                 importedCount++;
@@ -1098,12 +1195,18 @@
           if (data.wishlist && Array.isArray(data.wishlist)) {
             data.wishlist.forEach((item, i) => {
               if (!isDuplicateInWishlist(item.isbn, item.title, item.author)) {
+                let readDate = "";
+                if (item.date && item.date !== "未購入") {
+                  readDate = formatDateForInput(item.date);
+                }
+
                 wishlist.push({
                   ...item,
                   id: Date.now() + 10000 + i,
                   isbn: item.isbn || "", title: item.title || "タイトル不明",
                   author: item.author || "著者不明", publisher: item.publisher || "",
-                  thumbnail: item.thumbnail || ""
+                  thumbnail: item.thumbnail || "",
+                  readDate: readDate
                 });
                 importedCount++;
               } else { duplicateCount++; }
