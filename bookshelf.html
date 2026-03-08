@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v8</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v9</title>
   <!-- バーコードスキャン用ライブラリ -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
@@ -134,7 +134,7 @@
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv8</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv9</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
@@ -275,14 +275,26 @@
       <p style="font-size:0.9em; color:#555;">蔵書とほしい本のデータを「JSONファイル」としてダウンロードして保存します。</p>
       <button class="btn" style="background-color: #2980b9;" onclick="exportJSON()">データファイルを出力する</button>
     </div>
+    
+    <!-- ★変更：テキストでの取り込み機能を追加 -->
     <div class="card">
-      <h3>📤 ファイル取込 (読み込み)</h3>
-      <p style="font-size:0.9em; color:#555;">出力したJSONファイル（library_data.jsonなど）を選んで、データをアプリに戻します。<br>※すでに入っている本はスキップされます。</p>
-      <input type="file" id="import-file-input" accept=".json" class="form-control" onchange="importJSON(event)">
+      <h3>📤 データ取込 (読み込み)</h3>
+      <p style="font-size:0.9em; color:#555;">ファイルを選択するか、JSONテキストを直接貼り付けてデータをアプリに戻します。<br>※すでに入っている本はスキップされます。</p>
+      
+      <div style="margin-bottom: 20px;">
+        <h4 style="font-size:1em; margin-bottom:8px; color:#2c3e50;">方法1: ファイルから読み込む</h4>
+        <input type="file" id="import-file-input" accept=".json" class="form-control" onchange="importJSON(event)" style="margin-bottom: 0;">
+      </div>
+      
+      <div>
+        <h4 style="font-size:1em; margin-bottom:8px; color:#2c3e50;">方法2: テキストを貼り付けて読み込む</h4>
+        <textarea id="import-text-input" class="form-control" rows="5" placeholder="ここにJSONテキストを貼り付けてください..."></textarea>
+        <button class="btn" style="background-color: #27ae60; margin-top: 5px;" onclick="importJSONFromText()">テキストから読み込む</button>
+      </div>
     </div>
   </div>
 
-  <!-- ★5. 使い方（ヘルプ）画面 -->
+  <!-- 5. 使い方（ヘルプ）画面 -->
   <div id="screen-help" class="screen">
     <div class="nav-header">
       <h2>使い方（ヘルプ）</h2>
@@ -326,7 +338,7 @@
         <p>スマホやパソコンを新しくする時に使います。</p>
         <ul>
           <li><b>「出力」</b>を押すと、今の本のリストが「ファイル」としてダウンロードされます。</li>
-          <li>そのファイルを新しいスマホに送って<b>「取込」</b>から選ぶと、元通りにデータがもどってきます。</li>
+          <li>そのファイルを新しいスマホに送って<b>「方法1: 取込」</b>から選ぶか、中の文字をコピーして<b>「方法2: テキストを貼り付け」</b>て読み込むと、元通りにデータがもどってきます。</li>
         </ul>
       </div>
     </div>
@@ -459,7 +471,7 @@
     function deleteSelected(type) {
       const checkboxes = document.querySelectorAll(`.${type}-checkbox:checked`);
       if (checkboxes.length === 0) {
-        alert("削除する項目が選択されていません。左側のチェックボックスを選択してください。");
+        alert("削除する項目が選択されていません。左側の四角にチェックを入れてください。");
         return;
       }
       if (!confirm(`選択した ${checkboxes.length} 件をまとめて削除します。本当によろしいですか？`)) return;
@@ -479,7 +491,6 @@
 
     // --- 補助・共通関数 ---
     function getThumbnailHtml(url) {
-      // コンパクト化: サイズを 50x70 へ変更
       const placeholder = `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='70' viewBox='0 0 50 70'%3E%3Crect width='50' height='70' fill='%23ecf0f1' rx='4'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='9' fill='%23bdc3c7' font-weight='bold'%3ENo Image%3C/text%3E%3C/svg%3E`;
       let src = url ? url.replace('http:', 'https:') : placeholder;
       return `<img src="${src}" onerror="this.onerror=null; this.src='${placeholder}';" style="width:50px;height:70px;object-fit:cover;margin-right:12px;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,0.08); flex-shrink: 0;">`;
@@ -1233,6 +1244,64 @@
       }
     }
 
+    // 読み込みの共通処理
+    function processImportedJSONData(data) {
+      let importedCount = 0;
+      let duplicateCount = 0;
+      
+      if (data.books && Array.isArray(data.books)) {
+        data.books.forEach((item, i) => {
+          if (!isDuplicateInCollection(item.isbn, item.title, item.author)) {
+            let status = 'unread';
+            if (item.status === '既読' || item.status === '読了' || parseInt(item.rating) > 0 || (typeof item.impression === 'string' && item.impression.length > 0)) {
+              status = 'read';
+            }
+            
+            let readDate = "";
+            if (item.date && item.date !== "未購入") {
+              readDate = formatDateForInput(item.date);
+            }
+
+            collection.push({
+              ...item,
+              id: Date.now() + i,
+              isbn: item.isbn || "", title: item.title || "タイトル不明",
+              author: item.author || "著者不明", publisher: item.publisher || "",
+              thumbnail: item.thumbnail || "", status: status,
+              readDate: readDate,
+              rating: parseInt(item.rating) || 0, review: item.impression || ""
+            });
+            importedCount++;
+          } else { duplicateCount++; }
+        });
+      }
+
+      if (data.wishlist && Array.isArray(data.wishlist)) {
+        data.wishlist.forEach((item, i) => {
+          if (!isDuplicateInWishlist(item.isbn, item.title, item.author)) {
+            let readDate = "";
+            if (item.date && item.date !== "未購入") {
+              readDate = formatDateForInput(item.date);
+            }
+
+            wishlist.push({
+              ...item,
+              id: Date.now() + 10000 + i,
+              isbn: item.isbn || "", title: item.title || "タイトル不明",
+              author: item.author || "著者不明", publisher: item.publisher || "",
+              thumbnail: item.thumbnail || "",
+              readDate: readDate
+            });
+            importedCount++;
+          } else { duplicateCount++; }
+        });
+      }
+      
+      saveData();
+      alert(`${importedCount} 件のデータを取り込みました。\n(重複スキップ: ${duplicateCount} 件)`);
+    }
+
+    // 方法1: ファイルから読み込み
     function importJSON(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1241,59 +1310,7 @@
       reader.onload = function(e) {
         try {
           const data = JSON.parse(e.target.result);
-          let importedCount = 0;
-          let duplicateCount = 0;
-          
-          if (data.books && Array.isArray(data.books)) {
-            data.books.forEach((item, i) => {
-              if (!isDuplicateInCollection(item.isbn, item.title, item.author)) {
-                let status = 'unread';
-                if (item.status === '既読' || item.status === '読了' || parseInt(item.rating) > 0 || (typeof item.impression === 'string' && item.impression.length > 0)) {
-                  status = 'read';
-                }
-                
-                let readDate = "";
-                if (item.date && item.date !== "未購入") {
-                  readDate = formatDateForInput(item.date);
-                }
-
-                collection.push({
-                  ...item,
-                  id: Date.now() + i,
-                  isbn: item.isbn || "", title: item.title || "タイトル不明",
-                  author: item.author || "著者不明", publisher: item.publisher || "",
-                  thumbnail: item.thumbnail || "", status: status,
-                  readDate: readDate,
-                  rating: parseInt(item.rating) || 0, review: item.impression || ""
-                });
-                importedCount++;
-              } else { duplicateCount++; }
-            });
-          }
-
-          if (data.wishlist && Array.isArray(data.wishlist)) {
-            data.wishlist.forEach((item, i) => {
-              if (!isDuplicateInWishlist(item.isbn, item.title, item.author)) {
-                let readDate = "";
-                if (item.date && item.date !== "未購入") {
-                  readDate = formatDateForInput(item.date);
-                }
-
-                wishlist.push({
-                  ...item,
-                  id: Date.now() + 10000 + i,
-                  isbn: item.isbn || "", title: item.title || "タイトル不明",
-                  author: item.author || "著者不明", publisher: item.publisher || "",
-                  thumbnail: item.thumbnail || "",
-                  readDate: readDate
-                });
-                importedCount++;
-              } else { duplicateCount++; }
-            });
-          }
-          
-          saveData();
-          alert(`${importedCount} 件のデータを取り込みました。\n(重複スキップ: ${duplicateCount} 件)`);
+          processImportedJSONData(data);
         } catch (err) {
           alert("ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。");
           console.error(err);
@@ -1303,6 +1320,25 @@
         }
       };
       reader.readAsText(file);
+    }
+
+    // 方法2: テキスト貼り付けから読み込み
+    function importJSONFromText() {
+      const textEl = document.getElementById('import-text-input');
+      if (!textEl) return;
+      const text = textEl.value.trim();
+      if (!text) {
+        alert("JSONテキストが入力されていません。");
+        return;
+      }
+      try {
+        const data = JSON.parse(text);
+        processImportedJSONData(data);
+        textEl.value = ""; // 成功したらテキストボックスを空にする
+      } catch (err) {
+        alert("テキストの読み込みに失敗しました。正しいJSON形式か確認してください。");
+        console.error(err);
+      }
     }
 
     // 初期化表示
