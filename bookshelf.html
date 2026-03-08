@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v4</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v5</title>
   <!-- バーコードスキャン用ライブラリ -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
@@ -57,13 +57,13 @@
     .book-item-container { border-bottom: 1px solid #eee; padding: 15px 0; }
     .book-item-container:last-child { border-bottom: none; }
     .book-header { display: flex; align-items: flex-start; }
-    .book-info { flex-grow: 1; }
-    .book-info strong { display: block; font-size: 1.1em; margin-bottom: 5px; color: #2c3e50; }
-    .book-info small { color: #666; display: block; line-height: 1.4; }
+    .book-info { flex-grow: 1; min-width: 0; }
+    .book-info strong { display: block; font-size: 1.1em; margin-bottom: 5px; color: #2c3e50; white-space: normal; word-break: break-all; }
+    .book-info small { color: #666; display: block; line-height: 1.4; white-space: normal; word-break: break-all; }
     .empty-msg { text-align: center; color: #888; }
     .action-buttons { display: flex; gap: 10px; margin-top: 10px; }
 
-    /* 一括操作エリア用スタイル (追加) */
+    /* 一括操作エリア用スタイル */
     .bulk-action-area {
       display: flex; justify-content: space-between; align-items: center;
       background: #f8f9fa; padding: 10px 15px; border-radius: 6px;
@@ -90,6 +90,7 @@
     .modal-content {
       background-color: #fff; margin: 10% auto; padding: 20px;
       border-radius: 10px; width: 90%; max-width: 500px; box-sizing: border-box; position: relative;
+      max-height: 85vh; overflow-y: auto; /* 項目の増加に伴いスクロール可能に設定 */
     }
     .close-btn {
       color: #aaa; position: absolute; top: 15px; right: 20px;
@@ -106,7 +107,7 @@
 
   <!-- トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50;">📚 ブックシェルフv4</h1>
+    <h1 style="color: #2c3e50;">📚 ブックシェルフv5</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2c5282;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #8a4b08;">0</strong> 冊</p>
@@ -182,7 +183,7 @@
     <!-- ウィッシュリスト一覧 -->
     <div class="card">
       <h3>⭐ ウィッシュリスト一覧</h3>
-      <!-- 一括削除エリア (追加) -->
+      <!-- 一括削除エリア -->
       <div class="bulk-action-area" id="wishlist-bulk-area" style="display:none;">
         <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555;">
           <input type="checkbox" id="selectAllWishlist" onchange="toggleSelectAll('wishlist')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
@@ -203,10 +204,19 @@
     
     <div class="card">
       <input type="text" id="collection-search-input" class="form-control" placeholder="🔍 蔵書の中からタイトルや著者名で検索" oninput="renderCollection()">
+      
+      <!-- ★追加機能：ソート（並び替え）用プルダウン -->
+      <select id="collection-sort-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0;">
+        <option value="default">並び替え: 登録が新しい順</option>
+        <option value="titleAsc">並び替え: タイトル (あ〜ん)</option>
+        <option value="titleDesc">並び替え: タイトル (ん〜あ)</option>
+        <option value="authorAsc">並び替え: 著者名 (あ〜ん)</option>
+        <option value="authorDesc">並び替え: 著者名 (ん〜あ)</option>
+      </select>
     </div>
     
     <div class="card">
-      <!-- 一括削除エリア (追加) -->
+      <!-- 一括削除エリア -->
       <div class="bulk-action-area" id="collection-bulk-area" style="display:none;">
         <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555;">
           <input type="checkbox" id="selectAllCollection" onchange="toggleSelectAll('collection')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
@@ -236,14 +246,31 @@
     </div>
   </div>
 
-  <!-- ポップアップ (モーダル画面) -->
+  <!-- ポップアップ (モーダル画面) ★編集機能拡充 -->
   <div id="book-modal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
-      <h3 id="modal-title" style="margin-bottom: 5px; padding-right: 20px; text-align: left;">タイトル</h3>
-      <p id="modal-author" style="color:#666; font-size:0.9em; margin-top: 0;"></p>
+      <h3 style="margin-bottom: 15px; margin-top: 0; text-align: left; border-bottom: 2px solid #eee; padding-bottom: 10px;">📝 詳細・編集</h3>
       
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+      <!-- タイトル・著者などの編集フィールドを追加 -->
+      <label style="font-weight:bold; font-size:0.9em;">タイトル</label>
+      <input type="text" id="modal-edit-title" class="form-control">
+      
+      <div class="detail-row">
+        <div>
+          <label style="font-weight:bold; font-size:0.9em;">著者名</label>
+          <input type="text" id="modal-edit-author" class="form-control">
+        </div>
+        <div>
+          <label style="font-weight:bold; font-size:0.9em;">出版社</label>
+          <input type="text" id="modal-edit-publisher" class="form-control">
+        </div>
+      </div>
+      
+      <label style="font-weight:bold; font-size:0.9em;">ISBN (バーコード番号)</label>
+      <input type="text" id="modal-edit-isbn" class="form-control">
+
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;">
         <div class="detail-row">
           <div>
             <label style="font-weight:bold; font-size:0.9em;">状態</label>
@@ -265,7 +292,7 @@
           </div>
         </div>
         <label style="font-weight:bold; font-size:0.9em; margin-top: 10px; display:block;">読んだ感想・メモ</label>
-        <textarea id="modal-review" class="form-control" rows="4" placeholder="感想やメモを入力..."></textarea>
+        <textarea id="modal-review" class="form-control" rows="3" placeholder="感想やメモを入力..."></textarea>
       </div>
       
       <div class="action-buttons" style="justify-content: space-between; margin-top: 20px;">
@@ -277,20 +304,18 @@
 
   <script>
     // ==========================================
-    // データ管理（エラー自動修復機能・一括処理対応）
+    // データ管理
     // ==========================================
-    let collection = [];
+    let collection =[];
     let wishlist =[];
 
     function initData() {
-      // 古いデータのために、必ずIDを付与する安全対策処理を追加
       try {
         const c = localStorage.getItem('bookshelf_collection');
         if (c && c !== "undefined" && c !== "null") {
           collection = JSON.parse(c);
-          if (!Array.isArray(collection)) {
-            collection =[];
-          } else {
+          if (!Array.isArray(collection)) { collection =[]; } 
+          else {
             let modified = false;
             collection.forEach((b, i) => { if (!b.id) { b.id = Date.now() + i; modified = true; } });
             if (modified) localStorage.setItem('bookshelf_collection', JSON.stringify(collection));
@@ -302,9 +327,8 @@
         const w = localStorage.getItem('bookshelf_wishlist');
         if (w && w !== "undefined" && w !== "null") {
           wishlist = JSON.parse(w);
-          if (!Array.isArray(wishlist)) {
-            wishlist =[];
-          } else {
+          if (!Array.isArray(wishlist)) { wishlist =[]; } 
+          else {
             let modified = false;
             wishlist.forEach((b, i) => { if (!b.id) { b.id = Date.now() + 10000 + i; modified = true; } });
             if (modified) localStorage.setItem('bookshelf_wishlist', JSON.stringify(wishlist));
@@ -324,7 +348,7 @@
       }
     }
 
-    // --- 一括削除・チェックボックス関連 (追加) ---
+    // --- 一括削除・チェックボックス関連 ---
     function toggleSelectAll(type) {
       const selectAllCheckbox = document.getElementById(`selectAll${type === 'collection' ? 'Collection' : 'Wishlist'}`);
       if (!selectAllCheckbox) return;
@@ -350,7 +374,6 @@
       }
       if (!confirm(`選択した ${checkboxes.length} 件をまとめて削除します。本当によろしいですか？`)) return;
       
-      // 選択されたIDを文字列として取得
       const idsToDelete = Array.from(checkboxes).map(cb => String(cb.value));
       
       if (type === 'collection') {
@@ -405,9 +428,7 @@
         if (screenId !== 'screen-scan') stopScanner();
         
         const targetScreen = document.getElementById(screenId);
-        if (targetScreen) {
-          targetScreen.classList.add('active');
-        }
+        if (targetScreen) targetScreen.classList.add('active');
 
         if (screenId === 'screen-top') {
           updateCounts();
@@ -419,7 +440,9 @@
           renderWishlist();
         } else if (screenId === 'screen-collection') {
           const searchInput = document.getElementById('collection-search-input');
+          const sortInput = document.getElementById('collection-sort-select');
           if (searchInput) searchInput.value = ""; 
+          if (sortInput) sortInput.value = "default"; // 画面遷移時にソート状態をリセット
           renderCollection();
         }
       } catch (err) {
@@ -632,7 +655,6 @@
             addToCollection(isbn, bookData.title, bookData.author, bookData.publisher, bookData.thumbnail);
           } else {
             addToWishlist(bookData.title, bookData.author, bookData.publisher, bookData.thumbnail, isbn);
-            showScreen('screen-wish'); 
           }
         };
         resultDiv.appendChild(btnAdd);
@@ -782,6 +804,12 @@
     }
 
     function addToWishlist(title, author, publisher, thumbnail, isbn) {
+      // ★追加：蔵書リストにある場合はウィッシュリストへの追加をブロックする
+      if (isDuplicateInCollection(isbn, title, author)) {
+        alert("この本は既に「蔵書リスト」に登録されているため、ほしい本(ウィッシュリスト)には追加できません。");
+        return;
+      }
+      // ウィッシュリスト内の重複チェック
       if (isDuplicateInWishlist(isbn, title, author)) {
         alert("この本は既にウィッシュリストに登録されています。");
         return;
@@ -789,14 +817,19 @@
       wishlist.unshift({ id: Date.now(), title, author, publisher, thumbnail, isbn });
       saveData();
       alert("ウィッシュリストに追加しました！");
-      renderWishlist();
-      const resDiv = document.getElementById('wish-search-results');
-      if (resDiv) resDiv.innerHTML = "";
-      const inputEl = document.getElementById('wish-search-input');
-      if (inputEl) inputEl.value = "";
+      
+      // もしスキャン画面から呼ばれた場合はウィッシュリスト画面へ遷移
+      if (document.getElementById('screen-scan').classList.contains('active')) {
+        showScreen('screen-wish');
+      } else {
+        renderWishlist();
+        const resDiv = document.getElementById('wish-search-results');
+        if (resDiv) resDiv.innerHTML = "";
+        const inputEl = document.getElementById('wish-search-input');
+        if (inputEl) inputEl.value = "";
+      }
     }
 
-    // 変更: チェックボックス配置・バルク表示の追加
     function renderWishlist() {
       const container = document.getElementById('wish-list-container');
       const bulkArea = document.getElementById('wishlist-bulk-area');
@@ -860,25 +893,38 @@
     }
 
     // ==========================================
-    // 3. 蔵書一覧・検索機能 & 編集モーダル
+    // 3. 蔵書一覧・検索・ソート機能 & 編集モーダル
     // ==========================================
-    // 変更: チェックボックス配置・バルク表示の追加
     function renderCollection() {
       const searchInput = document.getElementById('collection-search-input');
+      const sortSelect = document.getElementById('collection-sort-select');
       const container = document.getElementById('collection-list-container');
       const bulkArea = document.getElementById('collection-bulk-area');
       const selectAll = document.getElementById('selectAllCollection');
       
       if (!container) return;
       const query = searchInput ? searchInput.value.toLowerCase() : "";
+      const sortType = sortSelect ? sortSelect.value : "default";
+      
       container.innerHTML = "";
       
-      const filtered = collection.filter(b => {
+      let filtered = collection.filter(b => {
         const t = b.title ? b.title.toLowerCase() : "";
         const a = b.author ? b.author.toLowerCase() : "";
         const p = b.publisher ? b.publisher.toLowerCase() : "";
         return t.includes(query) || a.includes(query) || p.includes(query);
       });
+
+      // ★追加：ソート（並び替え）処理
+      if (sortType === "titleAsc") {
+        filtered.sort((a, b) => (a.title || "").localeCompare(b.title || "", 'ja'));
+      } else if (sortType === "titleDesc") {
+        filtered.sort((a, b) => (b.title || "").localeCompare(a.title || "", 'ja'));
+      } else if (sortType === "authorAsc") {
+        filtered.sort((a, b) => (a.author || "").localeCompare(b.author || "", 'ja'));
+      } else if (sortType === "authorDesc") {
+        filtered.sort((a, b) => (b.author || "").localeCompare(a.author || "", 'ja'));
+      }
 
       if(filtered.length === 0) {
         container.innerHTML = "<p class='empty-msg'>該当する蔵書がありません。</p>"; 
@@ -890,7 +936,9 @@
       if(selectAll) selectAll.checked = false;
 
       filtered.forEach((book) => {
+        // 現在の book が元の collection 配列のどこにいるか取得（編集・削除のため）
         const originalIndex = collection.indexOf(book);
+        
         const div = document.createElement('div');
         div.className = "book-item-container";
         
@@ -913,7 +961,7 @@
                   <div style="margin-top:8px;">${statusBadge}${ratingStar}</div>
                 </div>
               </div>
-              <button class="btn" style="margin-top:10px; margin-bottom:0; padding:8px; background-color: var(--primary-color);" onclick="openModal(${originalIndex})">📝 詳細・編集（感想・評価など）</button>
+              <button class="btn" style="margin-top:10px; margin-bottom:0; padding:8px; background-color: var(--primary-color);" onclick="openModal(${originalIndex})">📝 詳細・編集</button>
             </div>
           </div>
         `;
@@ -927,11 +975,17 @@
       const book = collection[index];
       if (!book) return;
       currentEditIndex = index;
-      document.getElementById('modal-title').innerText = book.title || "不明";
-      document.getElementById('modal-author').innerText = `著者: ${book.author || "不明"}`;
+      
+      // ★追加：基本情報も編集できるように値をセット
+      document.getElementById('modal-edit-title').value = book.title || "";
+      document.getElementById('modal-edit-author').value = book.author || "";
+      document.getElementById('modal-edit-publisher').value = book.publisher || "";
+      document.getElementById('modal-edit-isbn').value = book.isbn || "";
+      
       document.getElementById('modal-status').value = book.status || 'unread';
       document.getElementById('modal-rating').value = parseInt(book.rating) || '0';
       document.getElementById('modal-review').value = book.review || '';
+      
       document.getElementById('book-modal').style.display = 'block';
     }
 
@@ -942,6 +996,12 @@
 
     function saveModal() {
       if (currentEditIndex > -1 && collection[currentEditIndex]) {
+        // ★追加：基本情報の編集を保存
+        collection[currentEditIndex].title = document.getElementById('modal-edit-title').value.trim();
+        collection[currentEditIndex].author = document.getElementById('modal-edit-author').value.trim();
+        collection[currentEditIndex].publisher = document.getElementById('modal-edit-publisher').value.trim();
+        collection[currentEditIndex].isbn = document.getElementById('modal-edit-isbn').value.trim();
+        
         collection[currentEditIndex].status = document.getElementById('modal-status').value;
         collection[currentEditIndex].rating = parseInt(document.getElementById('modal-rating').value) || 0;
         collection[currentEditIndex].review = document.getElementById('modal-review').value;
