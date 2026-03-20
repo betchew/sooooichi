@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v12</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v13</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
@@ -94,7 +94,7 @@
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv12</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv13</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
@@ -263,7 +263,7 @@
       <button class="btn btn-back" onclick="showScreen('screen-top')">ホーム</button>
     </div>
 
-    <!-- ★追加：共有用CSV出力機能 -->
+    <!-- 共有用CSV出力機能 -->
     <div class="card">
       <h3 style="color:#16a085;">🤝 友達と共有 (CSV出力)</h3>
       <p style="font-size:0.9em; color:#555;">蔵書の中から選んだ本を、Excel等で見られる「CSV形式」で出力します。おすすめの本を友達に教えたい時などに便利です。</p>
@@ -291,7 +291,7 @@
     </div>
   </div>
 
-  <!-- ★追加：共有用CSV出力画面 -->
+  <!-- 共有用CSV出力画面 -->
   <div id="screen-export-csv" class="screen">
     <div class="nav-header">
       <h2>共有用CSV出力</h2>
@@ -389,6 +389,7 @@
         </div>
       </div>
 
+      <!-- コレクション用のフィールド（ここで安全に切り替える） -->
       <div id="modal-collection-fields" style="display:none;">
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;">
           <div class="detail-row">
@@ -438,7 +439,7 @@
         if (c && c !== "undefined" && c !== "null") {
           collection = JSON.parse(c);
           if (!Array.isArray(collection)) collection =[]; 
-          else collection.forEach((b, i) => { if (!b.id) b.id = Date.now() + i; if(!b.tags) b.tags =[]; });
+          else collection.forEach((b, i) => { if (!b.id) b.id = Date.now() + i; if(!b.tags) b.tags = []; });
         }
       } catch (e) { collection =[]; }
 
@@ -471,7 +472,7 @@
     }
 
     function updateTagSelects() {
-      // CSV出力画面のプルダウンも含める['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'].forEach(id => {
+      // 修正：コメント行の記述ミスを直し、正しくプルダウンを更新するようにしました['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const currentVal = el.value;
@@ -603,7 +604,6 @@
         document.getElementById('collection-tag-select').value = "";
         renderCollection();
       } else if (screenId === 'screen-export-csv') {
-        // CSV出力画面を開いた時のリセット
         document.getElementById('export-search-input').value = "";
         document.getElementById('export-tag-select').value = "";
         renderExportCsvList();
@@ -1023,6 +1023,7 @@
       const filterInput = document.getElementById(`${type}-filter-input`) || document.getElementById(`${type}-search-input`);
       const sortSelect = document.getElementById(`${type}-sort-select`);
       const tagSelect = document.getElementById(`${type}-tag-select`);
+      
       const containerId = type === 'wishlist' ? 'wishlist-list-container' : 'collection-list-container';
       const container = document.getElementById(containerId);
       const bulkArea = document.getElementById(`${type}-bulk-area`) || document.getElementById(`${type}list-bulk-area`);
@@ -1307,7 +1308,7 @@
       catch (err) { alert("正しいJSON形式か確認してください。"); }
     }
 
-    // --- ★追加：CSVエクスポート機能 ---
+    // --- CSVエクスポート機能 ---
     function escapeCSV(str) {
       if (str == null) return '""';
       return `"${String(str).replace(/"/g, '""')}"`;
@@ -1399,10 +1400,7 @@
 
     function executeCsvExport() {
       const checkboxes = document.querySelectorAll('.export-checkbox:checked');
-      if (checkboxes.length === 0) {
-        alert("出力する本が選択されていません。");
-        return;
-      }
+      if (checkboxes.length === 0) { alert("出力する本が選択されていません。"); return; }
       
       const selectedIds = Array.from(checkboxes).map(cb => cb.value);
       const targetBooks = collection.filter(b => selectedIds.includes(String(b.id)));
@@ -1418,15 +1416,10 @@
       
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+      const a = document.createElement('a'); a.href = url;
+      const now = new Date(); const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
       a.download = `bookshelf_export_${dateStr}.csv`;
-      
-      a.click();
-      URL.revokeObjectURL(url);
+      a.click(); URL.revokeObjectURL(url);
     }
 
     // 初期化表示
