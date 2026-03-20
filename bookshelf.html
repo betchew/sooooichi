@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v14</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v15</title>
   <!-- バーコードスキャン用ライブラリ -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
@@ -95,7 +95,7 @@
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv14</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv15</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
@@ -390,7 +390,7 @@
         </div>
       </div>
 
-      <!-- コレクション用のフィールド -->
+      <!-- コレクション用のフィールド（ここで安全に切り替える） -->
       <div id="modal-collection-fields" style="display:none;">
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;">
           <div class="detail-row">
@@ -440,7 +440,7 @@
         if (c && c !== "undefined" && c !== "null") {
           collection = JSON.parse(c);
           if (!Array.isArray(collection)) collection =[]; 
-          else collection.forEach((b, i) => { if (!b.id) b.id = Date.now() + i; if(!b.tags) b.tags =[]; });
+          else collection.forEach((b, i) => { if (!b.id) b.id = Date.now() + i; if(!b.tags) b.tags = []; });
         }
       } catch (e) { collection =[]; }
 
@@ -473,7 +473,7 @@
     }
 
     function updateTagSelects() {
-      // プルダウンの更新（前回の構文エラー原因を修正）['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'].forEach(id => {
+      // 全てのタグプルダウンを更新する['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const currentVal = el.value;
@@ -868,7 +868,7 @@
         const bookData = {
           id: Date.now() + Math.random(),
           isbn: b.isbn, title: b.title, author: b.author, publisher: b.publisher, thumbnail: b.thumbnail,
-          tags:[...selectedTags]
+          tags: [...selectedTags]
         };
         
         if (currentScanTarget === 'collection') {
@@ -1220,7 +1220,7 @@
     window.onclick = function(e) { if (e.target == document.getElementById('book-modal')) closeModal(); else if (e.target == document.getElementById('bulk-register-modal')) closeBulkRegisterModal(); }
 
     // ==========================================
-    // 4. データ管理 (JSON出力・取込 / CSV出力)
+    // 4. データ入出力 (JSON出力・取込 / CSV出力)
     // ==========================================
     function exportJSON() {
       try {
