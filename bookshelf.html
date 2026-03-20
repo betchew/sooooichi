@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v11</title>
-  <!-- バーコードスキャン用ライブラリ -->
+  <title>蔵書検索アプリ「ブックシェルフ」v12</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
@@ -95,7 +94,7 @@
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv11</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv12</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
@@ -172,8 +171,7 @@
       <h3 style="font-size: 1.1em; margin-bottom: 10px;">➕ 新しく探して追加する</h3>
       <div class="tab-container">
         <button id="tab-btn-search" class="tab-btn active" onclick="switchWishTab('search')">🔍 キーワード</button>
-        <!-- ★追加・変更：ウィッシュリストでのスキャン・手入力タブ -->
-        <button id="tab-btn-scan" class="tab-btn" onclick="switchWishTab('scan')">📷/✍️ バーコード・ISBN</button>
+        <button id="tab-btn-scan" class="tab-btn" onclick="switchWishTab('scan')">📷/✍️ バーコード</button>
         <button id="tab-btn-manual" class="tab-btn" onclick="switchWishTab('manual')">📝 手動入力</button>
       </div>
 
@@ -183,15 +181,12 @@
         <div id="wish-search-results"></div>
       </div>
 
-      <!-- ★追加・変更：ウィッシュリスト用スキャン＆ISBN入力エリア -->
       <div id="wish-tab-scan" class="tab-content" style="text-align: center; padding: 15px 0;">
         <p style="font-size:0.9em; margin-bottom: 15px;">本のバーコードを読み取るか、ISBNを入力して追加します。</p>
-        
         <div style="display: flex; gap: 10px; margin-bottom: 15px; text-align: left;">
           <input type="text" id="wish-isbn-input" class="form-control" placeholder="ISBN (例: 978...)" style="margin-bottom: 0;">
           <button class="btn" style="margin-bottom: 0; width: auto; white-space: nowrap; background-color: #e67e22;" onclick="searchWishISBN()">検索・追加</button>
         </div>
-
         <button class="btn" style="background-color: #d68910;" onclick="openScanFor('wishlist')">📷 カメラ・連続スキャンへ</button>
       </div>
 
@@ -225,7 +220,6 @@
         <button class="btn btn-delete" style="margin:0; background-color: #e74c3c;" onclick="deleteSelected('wishlist')">選択を削除</button>
       </div>
       
-      <!-- ★修正：IDを wishlist-list-container に変更し、表示されないバグを解消 -->
       <div id="wishlist-list-container"></div>
     </div>
   </div>
@@ -268,14 +262,23 @@
       <h2>データ管理</h2>
       <button class="btn btn-back" onclick="showScreen('screen-top')">ホーム</button>
     </div>
+
+    <!-- ★追加：共有用CSV出力機能 -->
     <div class="card">
-      <h3>📥 ファイル出力 (保存)</h3>
-      <p style="font-size:0.9em; color:#555;">全データを「JSONファイル」としてダウンロードして保存します。</p>
+      <h3 style="color:#16a085;">🤝 友達と共有 (CSV出力)</h3>
+      <p style="font-size:0.9em; color:#555;">蔵書の中から選んだ本を、Excel等で見られる「CSV形式」で出力します。おすすめの本を友達に教えたい時などに便利です。</p>
+      <button class="btn" style="background-color: #16a085;" onclick="showScreen('screen-export-csv')">共有用のCSVを作る</button>
+    </div>
+
+    <div class="card">
+      <h3>📥 データ保存 (バックアップ出力)</h3>
+      <p style="font-size:0.9em; color:#555;">すべてのデータを「JSONファイル」としてダウンロードして保存します。</p>
       <button class="btn" style="background-color: #2980b9;" onclick="exportJSON()">データファイルを出力する</button>
     </div>
+
     <div class="card">
-      <h3>📤 データ取込 (読み込み)</h3>
-      <p style="font-size:0.9em; color:#555;">ファイルを選択するか、JSONテキストを直接貼り付けてデータを復元します。<br>※すでに入っている本はスキップされます。</p>
+      <h3>📤 データ取込 (復元)</h3>
+      <p style="font-size:0.9em; color:#555;">保存したJSONファイルを読み込むか、テキストを貼り付けてデータをアプリに戻します。<br>※すでに入っている本はスキップされます。</p>
       <div style="margin-bottom: 20px;">
         <h4 style="font-size:1em; margin-bottom:8px; color:#2c3e50;">方法1: ファイルから</h4>
         <input type="file" id="import-file-input" accept=".json" class="form-control" onchange="importJSON(event)" style="margin-bottom: 0;">
@@ -285,6 +288,33 @@
         <textarea id="import-text-input" class="form-control" rows="5" placeholder="ここにJSONテキストを貼り付けてください..."></textarea>
         <button class="btn" style="background-color: #27ae60; margin-top: 5px;" onclick="importJSONFromText()">テキストから読み込む</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ★追加：共有用CSV出力画面 -->
+  <div id="screen-export-csv" class="screen">
+    <div class="nav-header">
+      <h2>共有用CSV出力</h2>
+      <button class="btn btn-back" onclick="showScreen('screen-data')">戻る</button>
+    </div>
+    <div class="card">
+      <p style="font-size:0.9em; color:#555; margin-top:0;">CSVに出力して共有したい本を検索・選択してください。</p>
+      
+      <input type="text" id="export-search-input" class="form-control" placeholder="🔍 蔵書の中から検索" oninput="renderExportCsvList()">
+      <div style="display:flex; gap:10px; margin-bottom: 15px;">
+        <select id="export-tag-select" class="form-control" onchange="renderExportCsvList()" style="margin-bottom: 0;">
+          <option value="">すべてのタグ</option>
+        </select>
+      </div>
+
+      <div class="bulk-action-area" id="export-bulk-area" style="display:none;">
+        <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555; font-size: 0.9em;">
+          <input type="checkbox" id="selectAllExport" onchange="toggleSelectAllExport()" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
+        </label>
+        <button class="btn" style="width:auto; margin:0; background-color: #16a085; padding: 8px 15px; font-size: 0.9em;" onclick="executeCsvExport()">📥 CSVダウンロード</button>
+      </div>
+      
+      <div id="export-list-container"></div>
     </div>
   </div>
 
@@ -314,6 +344,14 @@
       <div class="help-section">
         <h3>🏷️ タグ機能について</h3>
         <p>「小説」「マンガ」「勉強用」など、好きな<b>タグ（目印）</b>を作って本に付けられます。タグをつけておけば、蔵書一覧の画面で「マンガだけ」を絞り込んで見ることができます。</p>
+      </div>
+      <div class="help-section">
+        <h3>📂 4. データ管理（出力 / 取込）</h3>
+        <p>スマホやパソコンを新しくする時や、友達に教える時に使います。</p>
+        <ul>
+          <li><b>「JSON出力(保存)」</b>を押すと今の本のリストがまるごとダウンロードされます。新しいスマホで<b>「取込」</b>を行うとデータがもどってきます。</li>
+          <li><b>「CSV出力(友達と共有)」</b>を使うと、選んだ本のリストをExcelなどで見られる形式にしてダウンロードできます。おすすめの本を友達に教えたい時に便利です！</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -351,7 +389,6 @@
         </div>
       </div>
 
-      <!-- ★修正：コレクション用のフィールド（編集ボタンエラー解消） -->
       <div id="modal-collection-fields" style="display:none;">
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;">
           <div class="detail-row">
@@ -368,7 +405,7 @@
             </div>
           </div>
           <div style="margin-top: 10px;">
-            <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">評価</label>
+            <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">評価 (面白さ)</label>
             <select id="modal-rating" class="form-control" style="margin-bottom: 0; color: #f39c12; font-weight: bold;">
               <option value="0" style="color: #333; font-weight: normal;">未評価</option>
               <option value="1">★1</option><option value="2">★2</option><option value="3">★3</option><option value="4">★4</option><option value="5">★5 (最高)</option>
@@ -401,7 +438,7 @@
         if (c && c !== "undefined" && c !== "null") {
           collection = JSON.parse(c);
           if (!Array.isArray(collection)) collection =[]; 
-          else collection.forEach((b, i) => { if (!b.id) b.id = Date.now() + i; if(!b.tags) b.tags = []; });
+          else collection.forEach((b, i) => { if (!b.id) b.id = Date.now() + i; if(!b.tags) b.tags =[]; });
         }
       } catch (e) { collection =[]; }
 
@@ -434,7 +471,7 @@
     }
 
     function updateTagSelects() {
-      ['collection-tag-select', 'wishlist-tag-select'].forEach(id => {
+      // CSV出力画面のプルダウンも含める['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const currentVal = el.value;
@@ -473,6 +510,7 @@
       return false;
     }
 
+    // --- 一括操作 ---
     function toggleSelectAll(type) {
       const selectAllCheckbox = document.getElementById(`selectAll${type === 'collection' ? 'Collection' : 'Wishlist'}`);
       if (!selectAllCheckbox) return;
@@ -505,6 +543,7 @@
       }
     }
 
+    // --- 補助・共通関数 ---
     function getThumbnailHtml(url) {
       const placeholder = `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='70' viewBox='0 0 50 70'%3E%3Crect width='50' height='70' fill='%23ecf0f1' rx='4'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='9' fill='%23bdc3c7' font-weight='bold'%3ENo Image%3C/text%3E%3C/svg%3E`;
       let src = url ? url.replace('http:', 'https:') : placeholder;
@@ -563,6 +602,11 @@
         document.getElementById('collection-sort-select').value = "default";
         document.getElementById('collection-tag-select').value = "";
         renderCollection();
+      } else if (screenId === 'screen-export-csv') {
+        // CSV出力画面を開いた時のリセット
+        document.getElementById('export-search-input').value = "";
+        document.getElementById('export-tag-select').value = "";
+        renderExportCsvList();
       }
     }
 
@@ -699,6 +743,21 @@
           if (gbData.items && gbData.items.length > 0) {
             const info = gbData.items[0].volumeInfo;
             bookData = { title: info.title || "タイトル不明", author: info.authors ? info.authors.join(", ") : "著者不明", publisher: info.publisher || "出版社不明", thumbnail: info.imageLinks ? info.imageLinks.thumbnail : "" };
+          }
+        } catch (e) {}
+      }
+
+      if (!bookData) {
+        try {
+          const ndlRes = await fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`);
+          const text = await ndlRes.text();
+          const xml = new DOMParser().parseFromString(text, "text/xml");
+          const item = xml.querySelector("item");
+          if (item) {
+            let publisher = "出版社不明";
+            const children = item.children;
+            for(let i=0; i<children.length; i++) { if (children[i].tagName.toLowerCase().includes("publisher")) publisher = children[i].textContent; }
+            bookData = { title: item.querySelector("title")?.textContent || "タイトル不明", author: item.querySelector("author")?.textContent || "著者不明", publisher: publisher, thumbnail: "" };
           }
         } catch (e) {}
       }
@@ -847,7 +906,6 @@
       if (content) content.classList.add('active');
     }
 
-    // ★ウィッシュリスト用 ISBN直入力
     async function searchWishISBN() {
       const inputEl = document.getElementById('wish-isbn-input');
       if (!inputEl) return;
@@ -865,7 +923,6 @@
       }
     }
 
-    // ★通信エラー強化版：Google Books API -> Open Library APIへ切り替え
     async function searchWishBook() {
       const inputEl = document.getElementById('wish-search-input');
       if (!inputEl) return;
@@ -959,7 +1016,6 @@
     // ==========================================
     // リスト描画 (蔵書・ウィッシュリスト)
     // ==========================================
-    // ★修正：ウィッシュリストも共通関数できれいに描画
     function renderList(type) {
       const isCollection = (type === 'collection');
       const listData = isCollection ? collection : wishlist;
@@ -967,8 +1023,6 @@
       const filterInput = document.getElementById(`${type}-filter-input`) || document.getElementById(`${type}-search-input`);
       const sortSelect = document.getElementById(`${type}-sort-select`);
       const tagSelect = document.getElementById(`${type}-tag-select`);
-      
-      // ★修正箇所：ウィッシュリストのコンテナIDを正しく取得できるように修正
       const containerId = type === 'wishlist' ? 'wishlist-list-container' : 'collection-list-container';
       const container = document.getElementById(containerId);
       const bulkArea = document.getElementById(`${type}-bulk-area`) || document.getElementById(`${type}list-bulk-area`);
@@ -1071,7 +1125,6 @@
       document.getElementById('modal-new-tag-input').value = "";
       renderTagCheckboxes('modal-tag-list', book.tags ||[]);
       
-      // ★修正箇所：エラーの起きない安全な切替
       const collectionFields = document.getElementById('modal-collection-fields');
       if (collectionFields) {
         if (type === 'collection') {
@@ -1165,7 +1218,7 @@
     window.onclick = function(e) { if (e.target == document.getElementById('book-modal')) closeModal(); else if (e.target == document.getElementById('bulk-register-modal')) closeBulkRegisterModal(); }
 
     // ==========================================
-    // 4. データ入出力
+    // 4. データ管理 (JSON出力・取込 / CSV出力)
     // ==========================================
     function exportJSON() {
       try {
@@ -1254,6 +1307,129 @@
       catch (err) { alert("正しいJSON形式か確認してください。"); }
     }
 
+    // --- ★追加：CSVエクスポート機能 ---
+    function escapeCSV(str) {
+      if (str == null) return '""';
+      return `"${String(str).replace(/"/g, '""')}"`;
+    }
+
+    function toggleSelectAllExport() {
+      const selectAllCheckbox = document.getElementById('selectAllExport');
+      if (!selectAllCheckbox) return;
+      const isChecked = selectAllCheckbox.checked;
+      const checkboxes = document.querySelectorAll('.export-checkbox');
+      checkboxes.forEach(cb => cb.checked = isChecked);
+    }
+
+    function updateSelectAllExportCheckbox() {
+      const checkboxes = document.querySelectorAll('.export-checkbox');
+      const checkedBoxes = document.querySelectorAll('.export-checkbox:checked');
+      const selectAllBtn = document.getElementById('selectAllExport');
+      if (selectAllBtn && checkboxes.length > 0) {
+        selectAllBtn.checked = (checkboxes.length === checkedBoxes.length);
+      }
+    }
+
+    function renderExportCsvList() {
+      const searchInput = document.getElementById('export-search-input');
+      const tagSelect = document.getElementById('export-tag-select');
+      const container = document.getElementById('export-list-container');
+      const bulkArea = document.getElementById('export-bulk-area');
+      const selectAll = document.getElementById('selectAllExport');
+      
+      if (!container) return;
+      const query = searchInput ? searchInput.value.toLowerCase() : "";
+      const selectedTag = tagSelect ? tagSelect.value : "";
+      
+      container.innerHTML = "";
+      
+      let filtered = collection.filter(b => {
+        const t = b.title ? b.title.toLowerCase() : "";
+        const a = b.author ? b.author.toLowerCase() : "";
+        const p = b.publisher ? b.publisher.toLowerCase() : "";
+        const matchText = t.includes(query) || a.includes(query) || p.includes(query);
+        const matchTag = selectedTag ? (b.tags && b.tags.includes(selectedTag)) : true;
+        return matchText && matchTag;
+      });
+
+      if(filtered.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>該当する本がありません。</p>"; 
+        if(bulkArea) bulkArea.style.display = 'none';
+        return;
+      }
+      
+      if(bulkArea) bulkArea.style.display = 'flex';
+      if(selectAll) selectAll.checked = false;
+      
+      filtered.forEach((book) => {
+        const div = document.createElement('div');
+        div.className = "book-item-container";
+        
+        let tagsHtml = "";
+        if(book.tags && book.tags.length > 0) {
+          tagsHtml = book.tags.map(t => `<span class="badge badge-tag">🏷️${escapeHtml(t)}</span>`).join('');
+        }
+
+        let ratingNum = parseInt(book.rating) || 0;
+        let ratingStar = ratingNum > 0 ? `<span class="rating-star">${'★'.repeat(ratingNum)}</span>` : "";
+        let statusBadge = book.status === 'read' ? `<span class="badge badge-read">既読</span>` : `<span class="badge badge-unread">未読</span>`;
+        let readDateBadge = (book.status === 'read' && book.readDate) ? `<span class="read-date-badge">読了: ${book.readDate.replace(/-/g, '/')}</span>` : "";
+        let extraMeta = statusBadge + ratingStar + readDateBadge;
+
+        div.innerHTML = `
+          <div style="display: flex; align-items: center;">
+            <div style="display:flex; align-items:center; padding-right:10px;">
+              <input type="checkbox" class="export-checkbox" value="${book.id}" onchange="updateSelectAllExportCheckbox()" style="width:18px;height:18px; cursor:pointer;">
+            </div>
+            <div style="flex-grow: 1; min-width:0; display: flex; align-items: center; justify-content: space-between;">
+              <div class="book-header" style="flex-grow: 1; min-width: 0;">
+                ${getThumbnailHtml(book.thumbnail)}
+                <div class="book-info">
+                  <div class="book-title">${escapeHtml(book.title)}</div>
+                  <div class="book-meta">${escapeHtml(book.author)} / ${escapeHtml(book.publisher || '不明')}</div>
+                  <div class="book-tags">${extraMeta}${tagsHtml}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function executeCsvExport() {
+      const checkboxes = document.querySelectorAll('.export-checkbox:checked');
+      if (checkboxes.length === 0) {
+        alert("出力する本が選択されていません。");
+        return;
+      }
+      
+      const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+      const targetBooks = collection.filter(b => selectedIds.includes(String(b.id)));
+      
+      let csv = '\uFEFF'; 
+      csv += 'タイトル,著者名,出版社,ISBN,状態,読了日,評価,感想・メモ,タグ\n';
+      
+      targetBooks.forEach(b => {
+        const statusStr = b.status === 'read' ? '既読' : '未読';
+        const tagsStr = (b.tags ||[]).join(' / ');
+        csv += `${escapeCSV(b.title)},${escapeCSV(b.author)},${escapeCSV(b.publisher)},${escapeCSV(b.isbn)},${escapeCSV(statusStr)},${escapeCSV(b.readDate)},${escapeCSV(b.rating)},${escapeCSV(b.review)},${escapeCSV(tagsStr)}\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+      a.download = `bookshelf_export_${dateStr}.csv`;
+      
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // 初期化表示
     window.onload = () => updateCounts();
   </script>
 </body>
