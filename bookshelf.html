@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v15</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v16</title>
   <!-- バーコードスキャン用ライブラリ -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
@@ -95,7 +95,7 @@
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv15</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv16</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
@@ -390,7 +390,7 @@
         </div>
       </div>
 
-      <!-- コレクション用のフィールド（ここで安全に切り替える） -->
+      <!-- コレクション用のフィールド -->
       <div id="modal-collection-fields" style="display:none;">
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;">
           <div class="detail-row">
@@ -473,7 +473,9 @@
     }
 
     function updateTagSelects() {
-      // 全てのタグプルダウンを更新する['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'].forEach(id => {
+      // 修正: 配列を変数に入れてから処理することでエラーを完全に防止
+      const selectIds =['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'];
+      selectIds.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const currentVal = el.value;
