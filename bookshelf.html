@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v17</title>
-  <!-- バーコードスキャン用ライブラリ -->
+  <title>蔵書検索アプリ「ブックシェルフ」v18</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
@@ -41,7 +40,6 @@
     .stats p { margin: 10px 0; font-weight: 500; color: var(--text-sub); }
     .stats strong { font-size: 1.4em; color: var(--primary-color); }
     
-    /* ホーム画面のボタンの色を統一 */
     #screen-top .btn:nth-of-type(1),
     #screen-top .btn:nth-of-type(2),
     #screen-top .btn:nth-of-type(3),
@@ -50,7 +48,6 @@
       background-color: var(--primary-color) !important; 
       color: #ffffff !important; 
     }
-    /* 6.使い方(ヘルプ) は落ち着いたアッシュグレーに */
     #screen-top .btn:nth-of-type(6) { 
       background-color: var(--secondary-color) !important; 
       color: #ffffff !important; 
@@ -134,7 +131,7 @@
       width: 92%; max-width: 500px; box-sizing: border-box; position: relative; 
       max-height: 80vh; overflow-y: auto; box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2), 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12); 
     }
-    .close-btn { color: var(--text-sub); position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: normal; cursor: pointer; transition: color 0.2s; line-height: 1; }
+    .close-btn { color: #ced4da; position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: normal; cursor: pointer; transition: color 0.2s; line-height: 1; }
     .close-btn:hover { color: var(--text-main); }
     .detail-row { display: flex; gap: 16px; margin-bottom: 4px; }
     .detail-row > div { flex: 1; }
@@ -151,20 +148,20 @@
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">ブックシェルフv17</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">ブックシェルフv18</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
     </div>
-    <button class="btn" onclick="openScanFor('collection')">1. 蔵書（ぞうしょ）に追加</button>
-    <button class="btn" onclick="showScreen('screen-wish')">2. ほしい本（ウィッシュリスト）</button>
+    <button class="btn" onclick="openScanFor('collection')">1. 蔵書に追加</button>
+    <button class="btn" onclick="showScreen('screen-wish')">2. ほしい本リスト</button>
     <button class="btn" onclick="showScreen('screen-collection')">3. 蔵書一覧・検索</button>
     <button class="btn" onclick="showScreen('screen-tags')">4. タグ管理</button>
     <button class="btn" onclick="showScreen('screen-data')">5. データ管理（出力 / 取込）</button>
     <button class="btn" onclick="showScreen('screen-help')">6. 使い方（ヘルプ）</button>
   </div>
 
-  <!-- 1. バーコードスキャン画面 (連続・一括対応) -->
+  <!-- 1. バーコードスキャン画面 -->
   <div id="screen-scan" class="screen">
     <div class="nav-header">
       <h2 id="scan-title">本を追加する</h2>
@@ -261,12 +258,12 @@
       <h3 style="margin-bottom: 15px;">リスト一覧</h3>
       
       <input type="text" id="wishlist-filter-input" class="form-control" placeholder="リストの中から検索" oninput="renderWishlist()">
-      <div style="display:flex; gap:10px; margin-bottom: 15px;">
-        <select id="wishlist-sort-select" class="form-control" onchange="renderWishlist()" style="margin-bottom: 0;">
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom: 15px;">
+        <select id="wishlist-sort-select" class="form-control" onchange="renderWishlist()" style="margin-bottom: 0; width: calc(50% - 5px);">
           <option value="default">新しい順</option><option value="oldest">古い順</option>
           <option value="titleAsc">タイトル順(あ〜)</option><option value="authorAsc">著者順(あ〜)</option>
         </select>
-        <select id="wishlist-tag-select" class="form-control" onchange="renderWishlist()" style="margin-bottom: 0;">
+        <select id="wishlist-tag-select" class="form-control" onchange="renderWishlist()" style="margin-bottom: 0; width: calc(50% - 5px);">
           <option value="">すべてのタグ</option>
         </select>
       </div>
@@ -275,7 +272,10 @@
         <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:500; color:var(--text-sub); font-size: 0.9em;">
           <input type="checkbox" id="selectAllWishlist" onchange="toggleSelectAll('wishlist')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
         </label>
-        <button class="btn btn-delete" onclick="deleteSelected('wishlist')">選択を削除</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="width:auto; margin:0; padding:6px 12px; font-size:13px; background-color: var(--secondary-color);" onclick="openBulkTagModal('wishlist')">一括タグ</button>
+          <button class="btn btn-delete" style="margin:0;" onclick="deleteSelected('wishlist')">削除</button>
+        </div>
       </div>
       
       <div id="wishlist-list-container"></div>
@@ -291,13 +291,26 @@
     
     <div class="card">
       <input type="text" id="collection-search-input" class="form-control" placeholder="蔵書の中から検索" oninput="renderCollection()">
-      <div style="display:flex; gap:10px; margin-bottom: 0;">
-        <select id="collection-sort-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0;">
+      
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom: 10px;">
+        <select id="collection-sort-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0; width: calc(50% - 5px);">
           <option value="default">新しい順</option><option value="oldest">古い順</option>
           <option value="titleAsc">タイトル順(あ〜)</option><option value="authorAsc">著者順(あ〜)</option>
         </select>
-        <select id="collection-tag-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0;">
+        <select id="collection-tag-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0; width: calc(50% - 5px);">
           <option value="">すべてのタグ</option>
+        </select>
+        <select id="collection-status-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0; width: calc(50% - 5px);">
+          <option value="">すべての状態</option>
+          <option value="read">既読</option>
+          <option value="unread">未読</option>
+        </select>
+        <select id="collection-rating-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0; width: calc(50% - 5px);">
+          <option value="">すべての評価</option>
+          <option value="5">★5のみ</option>
+          <option value="4">★4以上</option>
+          <option value="3">★3以上</option>
+          <option value="1">未評価を除く</option>
         </select>
       </div>
     </div>
@@ -307,10 +320,33 @@
         <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:500; color:var(--text-sub); font-size: 0.9em;">
           <input type="checkbox" id="selectAllCollection" onchange="toggleSelectAll('collection')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
         </label>
-        <button class="btn btn-delete" onclick="deleteSelected('collection')">選択を削除</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="width:auto; margin:0; padding:6px 12px; font-size:13px; background-color: var(--secondary-color);" onclick="openBulkTagModal('collection')">一括タグ</button>
+          <button class="btn btn-delete" style="margin:0;" onclick="deleteSelected('collection')">削除</button>
+        </div>
       </div>
       
       <div id="collection-list-container"></div>
+    </div>
+  </div>
+
+  <!-- リスト画面からの「一括タグ付けモーダル」 -->
+  <div id="bulk-tag-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeBulkTagModal()">&times;</span>
+      <h3 style="margin-bottom: 15px; margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">タグの一括付与</h3>
+      <p style="color:var(--text-sub); font-size:0.95em;">選択した <strong id="bulk-tag-count" style="font-size:1.2em; color:var(--primary-color);">0</strong> 件の本にタグを追加します。</p>
+      
+      <div style="margin-bottom:15px; background: rgba(0,0,0,0.02); padding:15px; border-radius:4px; border:1px solid var(--border-color);">
+        <label style="font-weight:500; font-size:0.9em; color: var(--text-sub);">付与するタグを選ぶ (複数可)</label>
+        <div id="bulk-add-tag-list" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
+        
+        <div style="display:flex; gap:10px; margin-top:15px;">
+          <input type="text" id="bulk-add-new-tag-input" class="form-control" style="margin-bottom:0; padding:8px;" placeholder="新しいタグ名">
+          <button class="btn" style="width:auto; margin-bottom:0; padding:8px 15px;" onclick="addTagFromBulkAdd()">追加</button>
+        </div>
+      </div>
+      <button class="btn" style="margin-top: 20px;" onclick="executeBulkTag()">タグを付与する</button>
     </div>
   </div>
 
@@ -322,12 +358,10 @@
     </div>
     <div class="card">
       <p style="font-size:0.9em; color:var(--text-sub); margin-top:0;">登録されているタグの一覧です。<br>タグを削除すると、設定されている本からもタグが外れます。</p>
-      
       <div style="display:flex; gap:10px; margin-bottom: 20px;">
         <input type="text" id="manage-new-tag-input" class="form-control" style="margin-bottom:0;" placeholder="新しいタグ名">
         <button class="btn" style="width:auto; margin-bottom:0; white-space:nowrap;" onclick="addTagFromManage()">追加</button>
       </div>
-
       <div id="tags-list-container"></div>
     </div>
   </div>
@@ -341,7 +375,7 @@
 
     <div class="card">
       <h3 style="color:#16a085;">友達と共有 (CSV出力)</h3>
-      <p style="font-size:0.9em; color:var(--text-sub);">蔵書の中から選んだ本を、Excel等で見られる「CSV形式」で出力します。おすすめの本を友達に教えたい時などに便利です。</p>
+      <p style="font-size:0.9em; color:var(--text-sub);">蔵書の中から選んだ本を、Excel等で見られる「CSV形式」で出力します。</p>
       <button class="btn" style="background-color: #00897b;" onclick="showScreen('screen-export-csv')">共有用のCSVを作る</button>
     </div>
 
@@ -353,7 +387,7 @@
 
     <div class="card">
       <h3>データ取込 (復元)</h3>
-      <p style="font-size:0.9em; color:var(--text-sub);">保存したJSONファイルを読み込むか、テキストを貼り付けてデータをアプリに戻します。<br>※すでに入っている本はスキップされます。</p>
+      <p style="font-size:0.9em; color:var(--text-sub);">保存したJSONファイルを読み込むか、テキストを貼り付けてデータをアプリに戻します。</p>
       <div style="margin-bottom: 20px;">
         <h4 style="font-size:1em; margin-bottom:8px; color:var(--text-main);">方法1: ファイルから</h4>
         <input type="file" id="import-file-input" accept=".json" class="form-control" onchange="importJSON(event)" style="margin-bottom: 0;">
@@ -504,9 +538,20 @@
     // ==========================================
     // データ管理・タグ管理
     // ==========================================
-    let collection = [];
+    let collection =[];
     let wishlist = [];
     let userTags =[];
+
+    let currentScanTarget = 'collection';
+    let html5QrCode = null;
+    let stagedBooks =[];
+    let lastScannedIsbn = "";
+    let lastScannedTime = 0;
+
+    let currentEditIndex = -1;
+    let currentEditType = 'collection';
+
+    let currentBulkTagType = 'collection';
 
     function initData() {
       try {
@@ -523,7 +568,7 @@
         if (w && w !== "undefined" && w !== "null") {
           wishlist = JSON.parse(w);
           if (!Array.isArray(wishlist)) wishlist =[]; 
-          else wishlist.forEach((b, i) => { if (!b.id) b.id = Date.now() + 10000 + i; if(!b.tags) b.tags = []; });
+          else wishlist.forEach((b, i) => { if (!b.id) b.id = Date.now() + 10000 + i; if(!b.tags) b.tags =[]; });
         }
       } catch (e) { wishlist =[]; }
       
@@ -535,7 +580,6 @@
       
       updateTagSelects();
     }
-    initData();
 
     function saveData() {
       try {
@@ -587,7 +631,9 @@
       return false;
     }
 
-    // --- タグ管理画面の機能 ---
+    // ==========================================
+    // タグ管理画面の機能
+    // ==========================================
     function renderTagManagement() {
       const container = document.getElementById('tags-list-container');
       if (!container) return;
@@ -646,29 +692,27 @@
         }
       }
       
-      // 蔵書からタグを削除
       collection.forEach(book => {
         if (book.tags && book.tags.includes(tagName)) {
           book.tags = book.tags.filter(t => t !== tagName);
         }
       });
       
-      // ウィッシュリストからタグを削除
       wishlist.forEach(book => {
         if (book.tags && book.tags.includes(tagName)) {
           book.tags = book.tags.filter(t => t !== tagName);
         }
       });
       
-      // userTagsから削除
       userTags.splice(index, 1);
-      
       saveData();
       updateTagSelects();
       renderTagManagement();
     }
 
-    // --- 一括操作 ---
+    // ==========================================
+    // 一括操作（削除）
+    // ==========================================
     function toggleSelectAll(type) {
       const selectAllCheckbox = document.getElementById(`selectAll${type === 'collection' ? 'Collection' : 'Wishlist'}`);
       if (!selectAllCheckbox) return;
@@ -701,7 +745,81 @@
       }
     }
 
-    // --- 補助・共通関数 ---
+    // ==========================================
+    // リストからの「一括タグ付け」処理
+    // ==========================================
+    function openBulkTagModal(type) {
+      currentBulkTagType = type;
+      const checkboxes = document.querySelectorAll(`.${type}-checkbox:checked`);
+      if (checkboxes.length === 0) {
+        alert("本が選択されていません。左側の四角にチェックを入れてください。");
+        return;
+      }
+      document.getElementById('bulk-tag-count').innerText = checkboxes.length;
+      document.getElementById('bulk-add-new-tag-input').value = "";
+      renderTagCheckboxes('bulk-add-tag-list',[]);
+      document.getElementById('bulk-tag-modal').style.display = 'block';
+    }
+
+    function closeBulkTagModal() {
+      document.getElementById('bulk-tag-modal').style.display = 'none';
+    }
+
+    function addTagFromBulkAdd() {
+      const input = document.getElementById('bulk-add-new-tag-input');
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val) { alert("タグ名を入力してください。"); return; }
+      if (addNewTag(val)) {
+        const checked = Array.from(document.querySelectorAll('.bulk-add-tag-list-checkbox:checked')).map(cb => cb.value);
+        checked.push(val);
+        renderTagCheckboxes('bulk-add-tag-list', checked);
+        input.value = "";
+      } else {
+        alert("そのタグは既に存在します。");
+      }
+    }
+
+    function executeBulkTag() {
+      const checkboxes = document.querySelectorAll(`.${currentBulkTagType}-checkbox:checked`);
+      const selectedTags = Array.from(document.querySelectorAll('.bulk-add-tag-list-checkbox:checked')).map(cb => cb.value);
+      
+      if (selectedTags.length === 0) {
+        alert("付与するタグを選択してください。");
+        return;
+      }
+
+      const idsToTag = Array.from(checkboxes).map(cb => String(cb.value));
+      const listData = currentBulkTagType === 'collection' ? collection : wishlist;
+      
+      let count = 0;
+      listData.forEach(book => {
+        if (idsToTag.includes(String(book.id))) {
+          const currentTags = book.tags ||[];
+          selectedTags.forEach(t => {
+            if (!currentTags.includes(t)) currentTags.push(t);
+          });
+          book.tags = currentTags;
+          count++;
+        }
+      });
+
+      saveData();
+      closeBulkTagModal();
+      
+      const selectAllBtn = document.getElementById(`selectAll${currentBulkTagType === 'collection' ? 'Collection' : 'Wishlist'}`);
+      if (selectAllBtn) selectAllBtn.checked = false;
+      document.querySelectorAll(`.${currentBulkTagType}-checkbox`).forEach(cb => cb.checked = false);
+
+      if (currentBulkTagType === 'collection') renderCollection();
+      else if (currentBulkTagType === 'wishlist') renderWishlist();
+      
+      alert(`${count} 件の本にタグを追加しました！`);
+    }
+
+    // ==========================================
+    // 補助・共通関数
+    // ==========================================
     function getThumbnailHtml(url) {
       const placeholder = `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='70' viewBox='0 0 50 70'%3E%3Crect width='50' height='70' fill='%23ecf0f1' rx='4'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='9' fill='%23bdc3c7' font-weight='bold'%3ENo Image%3C/text%3E%3C/svg%3E`;
       let src = url ? url.replace('http:', 'https:') : placeholder;
@@ -745,8 +863,6 @@
     // ==========================================
     // 画面遷移管理
     // ==========================================
-    let currentScanTarget = 'collection'; 
-
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       if (screenId !== 'screen-scan') stopScanner();
@@ -769,6 +885,10 @@
         document.getElementById('collection-search-input').value = ""; 
         document.getElementById('collection-sort-select').value = "default";
         document.getElementById('collection-tag-select').value = "";
+        const statusSelect = document.getElementById('collection-status-select');
+        if (statusSelect) statusSelect.value = "";
+        const ratingSelect = document.getElementById('collection-rating-select');
+        if (ratingSelect) ratingSelect.value = "";
         renderCollection();
       } else if (screenId === 'screen-tags') {
         renderTagManagement();
@@ -789,11 +909,6 @@
     // ==========================================
     // 1. バーコードスキャン (連続・一括)
     // ==========================================
-    let html5QrCode = null;
-    let stagedBooks =[];
-    let lastScannedIsbn = "";
-    let lastScannedTime = 0;
-
     function openScanFor(target) {
       currentScanTarget = target;
       const titleEl = document.getElementById('scan-title');
@@ -1064,7 +1179,7 @@
     }
 
     // ==========================================
-    // 2. ウィッシュリスト機能
+    // 2. ウィッシュリスト機能（追加検索）
     // ==========================================
     function switchWishTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1180,7 +1295,7 @@
       if (isDuplicateInCollection("", title, author)) { alert("この本は既に「蔵書」にあるため追加できません。"); return; }
       if (isDuplicateInWishlist("", title, author)) { alert("既にリストにあります。"); return; }
 
-      wishlist.unshift({ id: Date.now(), title, author, publisher, thumbnail: "", isbn: "", tags:[] });
+      wishlist.unshift({ id: Date.now(), title, author, publisher, thumbnail:"", isbn:"", tags:[] });
       saveData(); alert("追加しました！"); renderWishlist();
       titleEl.value = ""; document.getElementById('manual-author').value = ""; document.getElementById('manual-publisher').value = "";
     }
@@ -1188,18 +1303,13 @@
     // ==========================================
     // リスト描画 (蔵書・ウィッシュリスト)
     // ==========================================
-    function renderList(type) {
-      const isCollection = (type === 'collection');
-      const listData = isCollection ? collection : wishlist;
-      
-      const filterInput = document.getElementById(`${type}-filter-input`) || document.getElementById(`${type}-search-input`);
-      const sortSelect = document.getElementById(`${type}-sort-select`);
-      const tagSelect = document.getElementById(`${type}-tag-select`);
-      
-      const containerId = type === 'wishlist' ? 'wishlist-list-container' : 'collection-list-container';
-      const container = document.getElementById(containerId);
-      const bulkArea = document.getElementById(`${type}-bulk-area`) || document.getElementById(`${type}list-bulk-area`);
-      const selectAll = document.getElementById(`selectAll${isCollection ? 'Collection' : 'Wishlist'}`);
+    function renderWishlist() {
+      const filterInput = document.getElementById('wishlist-filter-input');
+      const sortSelect = document.getElementById('wishlist-sort-select');
+      const tagSelect = document.getElementById('wishlist-tag-select');
+      const container = document.getElementById('wishlist-list-container');
+      const bulkArea = document.getElementById('wishlist-bulk-area');
+      const selectAll = document.getElementById('selectAllWishlist');
       
       if (!container) return;
       const query = filterInput ? filterInput.value.toLowerCase() : "";
@@ -1208,7 +1318,7 @@
       
       container.innerHTML = "";
       
-      let filtered = listData.filter(b => {
+      let filtered = wishlist.filter(b => {
         const t = b.title ? b.title.toLowerCase() : "";
         const a = b.author ? b.author.toLowerCase() : "";
         const p = b.publisher ? b.publisher.toLowerCase() : "";
@@ -1233,7 +1343,7 @@
       if(selectAll) selectAll.checked = false;
       
       filtered.forEach((book) => {
-        const originalIndex = listData.indexOf(book);
+        const originalIndex = wishlist.indexOf(book);
         const div = document.createElement('div');
         div.className = "book-item-container";
         
@@ -1242,19 +1352,103 @@
           tagsHtml = book.tags.map(t => `<span class="badge badge-tag">${escapeHtml(t)}</span>`).join('');
         }
 
-        let extraMeta = "";
-        if (isCollection) {
-          let ratingNum = parseInt(book.rating) || 0;
-          let ratingStar = ratingNum > 0 ? `<span class="rating-star">${'★'.repeat(ratingNum)}</span>` : "";
-          let statusBadge = book.status === 'read' ? `<span class="badge badge-read">既読</span>` : `<span class="badge badge-unread">未読</span>`;
-          let readDateBadge = (book.status === 'read' && book.readDate) ? `<span class="read-date-badge">読了: ${book.readDate.replace(/-/g, '/')}</span>` : "";
-          extraMeta = statusBadge + ratingStar + readDateBadge;
+        div.innerHTML = `
+          <div style="display: flex; align-items: center;">
+            <div style="display:flex; align-items:center; padding-right:10px;">
+              <input type="checkbox" class="wishlist-checkbox" value="${book.id}" onchange="updateSelectAllCheckbox('wishlist')" style="width:18px;height:18px; cursor:pointer;">
+            </div>
+            <div style="flex-grow: 1; min-width:0; display: flex; align-items: center; justify-content: space-between;">
+              <div class="book-header" style="flex-grow: 1; min-width: 0;">
+                ${getThumbnailHtml(book.thumbnail)}
+                <div class="book-info">
+                  <div class="book-title">${escapeHtml(book.title)}</div>
+                  <div class="book-meta">${escapeHtml(book.author)} / ${escapeHtml(book.publisher || '不明')}</div>
+                  <div class="book-tags">${tagsHtml}</div>
+                </div>
+              </div>
+              <div style="margin-left: 8px; flex-shrink: 0;">
+                <button class="btn-edit" onclick="openModal(${originalIndex}, 'wishlist')">編集</button>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderCollection() {
+      const searchInput = document.getElementById('collection-search-input');
+      const sortSelect = document.getElementById('collection-sort-select');
+      const tagSelect = document.getElementById('collection-tag-select');
+      const statusSelect = document.getElementById('collection-status-select');
+      const ratingSelect = document.getElementById('collection-rating-select');
+      
+      const container = document.getElementById('collection-list-container');
+      const bulkArea = document.getElementById('collection-bulk-area');
+      const selectAll = document.getElementById('selectAllCollection');
+      
+      if (!container) return;
+      const query = searchInput ? searchInput.value.toLowerCase() : "";
+      const sortType = sortSelect ? sortSelect.value : "default";
+      const selectedTag = tagSelect ? tagSelect.value : "";
+      const selectedStatus = statusSelect ? statusSelect.value : "";
+      const selectedRating = ratingSelect ? ratingSelect.value : "";
+      
+      container.innerHTML = "";
+      
+      let filtered = collection.filter(b => {
+        const t = b.title ? b.title.toLowerCase() : "";
+        const a = b.author ? b.author.toLowerCase() : "";
+        const p = b.publisher ? b.publisher.toLowerCase() : "";
+        const matchText = t.includes(query) || a.includes(query) || p.includes(query);
+        const matchTag = selectedTag ? (b.tags && b.tags.includes(selectedTag)) : true;
+        const matchStatus = selectedStatus ? b.status === selectedStatus : true;
+        
+        let matchRating = true;
+        const ratingVal = parseInt(b.rating) || 0;
+        if (selectedRating === "5") matchRating = ratingVal === 5;
+        else if (selectedRating === "4") matchRating = ratingVal >= 4;
+        else if (selectedRating === "3") matchRating = ratingVal >= 3;
+        else if (selectedRating === "1") matchRating = ratingVal > 0;
+
+        return matchText && matchTag && matchStatus && matchRating;
+      });
+
+      if (sortType === "oldest") filtered.sort((a, b) => (a.id || 0) - (b.id || 0));
+      else if (sortType === "titleAsc") filtered.sort((a, b) => (a.title || "").localeCompare(b.title || "", 'ja'));
+      else if (sortType === "titleDesc") filtered.sort((a, b) => (b.title || "").localeCompare(a.title || "", 'ja'));
+      else if (sortType === "authorAsc") filtered.sort((a, b) => (a.author || "").localeCompare(b.author || "", 'ja'));
+      else if (sortType === "authorDesc") filtered.sort((a, b) => (b.author || "").localeCompare(a.author || "", 'ja'));
+
+      if(filtered.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>該当する本がありません。</p>"; 
+        if(bulkArea) bulkArea.style.display = 'none';
+        return;
+      }
+      
+      if(bulkArea) bulkArea.style.display = 'flex';
+      if(selectAll) selectAll.checked = false;
+      
+      filtered.forEach((book) => {
+        const originalIndex = collection.indexOf(book);
+        const div = document.createElement('div');
+        div.className = "book-item-container";
+        
+        let tagsHtml = "";
+        if(book.tags && book.tags.length > 0) {
+          tagsHtml = book.tags.map(t => `<span class="badge badge-tag">${escapeHtml(t)}</span>`).join('');
         }
+
+        let ratingNum = parseInt(book.rating) || 0;
+        let ratingStar = ratingNum > 0 ? `<span class="rating-star">${'★'.repeat(ratingNum)}</span>` : "";
+        let statusBadge = book.status === 'read' ? `<span class="badge badge-read">既読</span>` : `<span class="badge badge-unread">未読</span>`;
+        let readDateBadge = (book.status === 'read' && book.readDate) ? `<span class="read-date-badge">読了: ${book.readDate.replace(/-/g, '/')}</span>` : "";
+        let extraMeta = statusBadge + ratingStar + readDateBadge;
 
         div.innerHTML = `
           <div style="display: flex; align-items: center;">
             <div style="display:flex; align-items:center; padding-right:10px;">
-              <input type="checkbox" class="${type}-checkbox" value="${book.id}" onchange="updateSelectAllCheckbox('${type}')" style="width:18px;height:18px; cursor:pointer;">
+              <input type="checkbox" class="collection-checkbox" value="${book.id}" onchange="updateSelectAllCheckbox('collection')" style="width:18px;height:18px; cursor:pointer;">
             </div>
             <div style="flex-grow: 1; min-width:0; display: flex; align-items: center; justify-content: space-between;">
               <div class="book-header" style="flex-grow: 1; min-width: 0;">
@@ -1266,7 +1460,7 @@
                 </div>
               </div>
               <div style="margin-left: 8px; flex-shrink: 0;">
-                <button class="btn-edit" onclick="openModal(${originalIndex}, '${type}')">詳細・編集</button>
+                <button class="btn-edit" onclick="openModal(${originalIndex}, 'collection')">編集</button>
               </div>
             </div>
           </div>
@@ -1275,15 +1469,9 @@
       });
     }
 
-    function renderWishlist() { renderList('wishlist'); }
-    function renderCollection() { renderList('collection'); }
-
     // ==========================================
     // 詳細・編集モーダル
     // ==========================================
-    let currentEditIndex = -1;
-    let currentEditType = 'collection';
-
     function openModal(index, type) {
       currentEditType = type;
       currentEditIndex = index;
@@ -1376,7 +1564,7 @@
       
       collection.unshift({ ...book, id: Date.now(), status: 'unread', review: '', rating: 0, readDate: '' });
       wishlist.splice(currentEditIndex, 1);
-      saveData(); renderWishlist(); closeModal(); alert("蔵書へ移動しました！");
+      saveData(); renderWishlist(); closeModal(); alert("蔵書リストへ移動しました！");
     }
 
     function deleteFromModal() {
@@ -1388,10 +1576,14 @@
       }
     }
 
-    window.onclick = function(e) { if (e.target == document.getElementById('book-modal')) closeModal(); else if (e.target == document.getElementById('bulk-register-modal')) closeBulkRegisterModal(); }
+    window.onclick = function(e) { 
+      if (e.target == document.getElementById('book-modal')) closeModal(); 
+      else if (e.target == document.getElementById('bulk-register-modal')) closeBulkRegisterModal();
+      else if (e.target == document.getElementById('bulk-tag-modal')) closeBulkTagModal();
+    }
 
     // ==========================================
-    // 5. データ管理 (JSON出力・取込 / CSV出力)
+    // 4. データ入出力 (JSON出力・取込 / CSV出力)
     // ==========================================
     function exportJSON() {
       try {
@@ -1591,86 +1783,6 @@
       const now = new Date(); const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
       a.download = `bookshelf_export_${dateStr}.csv`;
       a.click(); URL.revokeObjectURL(url);
-    }
-
-    // ==========================================
-    // タグ管理画面
-    // ==========================================
-    function renderTagManagement() {
-      const container = document.getElementById('tags-list-container');
-      if (!container) return;
-      container.innerHTML = "";
-      if (userTags.length === 0) {
-        container.innerHTML = "<p class='empty-msg'>タグがありません。</p>";
-        return;
-      }
-      userTags.forEach((tag, index) => {
-        const div = document.createElement('div');
-        div.style.display = "flex";
-        div.style.justifyContent = "space-between";
-        div.style.alignItems = "center";
-        div.style.padding = "12px 0";
-        div.style.borderBottom = "1px solid var(--border-color)";
-        
-        const countCollection = collection.filter(b => b.tags && b.tags.includes(tag)).length;
-        const countWishlist = wishlist.filter(b => b.tags && b.tags.includes(tag)).length;
-        const totalCount = countCollection + countWishlist;
-        
-        div.innerHTML = `
-          <div style="flex-grow:1; min-width:0; padding-right:10px;">
-            <div style="font-weight:bold; color:var(--text-main); word-break:break-all;">${escapeHtml(tag)}</div>
-            <div style="font-size:0.85em; color:var(--text-sub);">使用中: ${totalCount}冊</div>
-          </div>
-          <button class="btn btn-delete" style="margin:0; flex-shrink:0;" onclick="deleteTag(${index}, '${escapeHtml(tag)}', ${totalCount})">削除</button>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function addTagFromManage() {
-      const input = document.getElementById('manage-new-tag-input');
-      if (!input) return;
-      const val = input.value.trim();
-      if (!val) {
-        alert("タグ名を入力してください。");
-        return;
-      }
-      if (addNewTag(val)) {
-        input.value = "";
-        renderTagManagement();
-      } else {
-        alert("そのタグは既に存在します。");
-      }
-    }
-
-    function deleteTag(index, tagName, usageCount) {
-      if (usageCount > 0) {
-        if (!confirm(`タグ「${tagName}」は現在 ${usageCount} 冊の本に設定されています。\n削除すると本からもこのタグが消えますが、本当によろしいですか？`)) {
-          return;
-        }
-      } else {
-        if (!confirm(`タグ「${tagName}」を削除しますか？`)) {
-          return;
-        }
-      }
-      
-      collection.forEach(book => {
-        if (book.tags && book.tags.includes(tagName)) {
-          book.tags = book.tags.filter(t => t !== tagName);
-        }
-      });
-      
-      wishlist.forEach(book => {
-        if (book.tags && book.tags.includes(tagName)) {
-          book.tags = book.tags.filter(t => t !== tagName);
-        }
-      });
-      
-      userTags.splice(index, 1);
-      
-      saveData();
-      updateTagSelects();
-      renderTagManagement();
     }
 
     // 初期化表示
