@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v19</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v20</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
@@ -44,9 +44,12 @@
     #screen-top .btn:nth-of-type(2),
     #screen-top .btn:nth-of-type(3),
     #screen-top .btn:nth-of-type(4),
-    #screen-top .btn:nth-of-type(5),
-    #screen-top .btn:nth-of-type(6) { 
+    #screen-top .btn:nth-of-type(5) { 
       background-color: var(--primary-color) !important; 
+      color: #ffffff !important; 
+    }
+    #screen-top .btn:nth-of-type(6) { 
+      background-color: #00897b !important; 
       color: #ffffff !important; 
     }
     #screen-top .btn:nth-of-type(7) { 
@@ -140,7 +143,7 @@
     
     .help-section { margin-bottom: 24px; }
     .help-section h3 { text-align: left; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.1em; font-weight: 500;}
-    .help-section p, .help-section ul { font-size: 0.95em; line-height: 1.7; color: var(--text-sub); margin-top: 0; }
+    .help-section p, .help-section ul { font-size: 0.95em; line-height: 1.6; color: var(--text-sub); margin-top: 0; }
     .help-section ul { padding-left: 24px; margin-top: 8px; }
 
     /* スクロールボタンのスタイル */
@@ -164,7 +167,7 @@
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">ブックシェルフv19</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">ブックシェルフv20</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
@@ -268,6 +271,7 @@
       </div>
     </div>
 
+    <!-- ウィッシュリスト一覧 -->
     <div class="card">
       <h3 style="margin-bottom: 15px;">リスト一覧</h3>
       <input type="text" id="wishlist-filter-input" class="form-control" placeholder="リストの中から検索" oninput="renderWishlist()">
@@ -348,6 +352,7 @@
           <button class="btn btn-delete" style="margin:0;" onclick="deleteSelected('collection')">削除</button>
         </div>
       </div>
+      
       <div id="collection-list-container"></div>
     </div>
   </div>
@@ -500,27 +505,42 @@
         <p>あなたが持っている本や、これから読みたい本をスマートに整理できるアプリです。<br>データはあなたのブラウザの中に自動で保存されます。</p>
       </div>
       <div class="help-section">
-        <h3>1. 本を追加しよう</h3>
-        <p><strong>「蔵書に追加」</strong>ボタンから、カメラを起動してみよう！</p>
+        <h3>1. 蔵書（ぞうしょ）に追加</h3>
+        <p>持っている本をアプリに登録します。</p>
         <ul>
-          <li>本のうしろにある、<b>上の段のバーコード（978か979から）</b>をカメラでうつすと、本の情報が自動で一時リストに入ります。</li>
-          <li><b>連続で何冊もスキャンできます。</b>全部終わったら「一括登録」ボタンでまとめて保存し、そのときに<b>「タグ」</b>をいっしょに付けることもできます。</li>
+          <li><b>カメラでスキャン：</b> 本のうしろにある、<b>上の段のバーコード（978か979から始まる数字）</b>をカメラでうつすと、情報が自動で一時リストに入ります。<b>連続で何冊も</b>スキャンできます。</li>
+          <li><b>手入力：</b> バーコードの数字を直接打ち込んで追加することもできます。</li>
+          <li>全部終わったら<b>「一括登録」</b>ボタンでまとめて保存します。そのときに<b>「タグ」</b>をいっしょに付けることもできます。</li>
         </ul>
       </div>
       <div class="help-section">
         <h3>2. ほしい本リスト（ウィッシュリスト）</h3>
         <p>本屋さんや図書館で見つけた<strong>「いつか読みたい本」</strong>をメモしておけます。</p>
-      </div>
-      <div class="help-section">
-        <h3>タグ機能について</h3>
-        <p>「小説」「マンガ」「勉強用」など、好きな<b>タグ（目印）</b>を作って本に付けられます。タグをつけておけば、蔵書一覧の画面で「マンガだけ」を絞り込んで見ることができます。</p>
-      </div>
-      <div class="help-section">
-        <h3>データ管理（出力 / 取込）</h3>
-        <p>スマホやパソコンを新しくする時や、友達に教える時に使います。</p>
         <ul>
-          <li><b>「データ保存(バックアップ)」</b>を押すと今の本のリストがまるごとダウンロードされます。新しいスマホで<b>「取込」</b>を行うとデータがもどってきます。</li>
-          <li><b>「CSV出力(友達と共有)」</b>を使うと、選んだ本のリストをExcelなどで見られる形式にしてダウンロードできます。おすすめの本を友達に教えたい時に便利です！</li>
+          <li>キーワードで検索したり、バーコードを読み取って追加できます。</li>
+          <li>本を手に入れたら、リストの左側にある四角（チェックボックス）を選んで<b>「蔵書へ移動」</b>を押すか、<b>「編集」</b>から移動させることで、持っている本（蔵書）に移すことができます。</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3>3. 蔵書一覧・検索</h3>
+        <p>登録した本を探したり、感想を書き込んだりできます。</p>
+        <ul>
+          <li><b>探す・並び替え：</b> 本の名前や作者名で検索できます。また「シリーズ順」や「新しい順」、タグ、評価（星の数）、読んだかどうかで絞り込みができます。</li>
+          <li><b>編集する：</b> <b>「編集」</b>ボタンを押すと、読んだ日付、面白さの評価（星0.5〜5.0）、感想・メモ、シリーズ名、巻数を書き込めます。</li>
+          <li><b>まとめて操作：</b> 左側の四角にチェックを入れると、複数の本に<b>まとめてタグやシリーズ名</b>を付けたり、一気に削除したりできます。</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3>4. タグ管理</h3>
+        <p>「小説」「マンガ」「勉強用」など、好きな<b>タグ（目印）</b>を作って本をグループ分けできます。ここから新しいタグを作ったり、いらなくなったタグを消したりできます。</p>
+      </div>
+      <div class="help-section">
+        <h3>5. データ管理と共有</h3>
+        <p>データを別のスマホに移したり、友達とおすすめの本を見せ合ったりできます。</p>
+        <ul>
+          <li><b>データ保存・取込：</b> すべてのデータを「JSONファイル」としてダウンロードします。新しいスマホで<b>「取込」</b>を行うとデータがもどってきます。ファイルの文字をコピーして貼り付けても取り込めます。</li>
+          <li><b>友達と共有：</b> <b>「共有用CSV出力」</b>から、選んだ本のリストをダウンロードできます。</li>
+          <li><b>共有CSVを見る：</b> 友達からもらったCSVファイルを読み込むと、アプリの中でリストを見ることができます。</li>
         </ul>
       </div>
     </div>
@@ -587,7 +607,7 @@
             </div>
           </div>
           <div style="margin-top: 10px;">
-            <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">評価 (面白さ)</label>
+            <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">評価</label>
             <select id="modal-rating" class="form-control" style="margin-bottom: 0; color: #fbc02d; font-weight: bold;">
               <option value="0" style="color: var(--text-main); font-weight: normal;">未評価</option>
               <option value="0.5">★0.5</option><option value="1">★1.0</option><option value="1.5">★1.5</option>
@@ -781,9 +801,13 @@
 
     function deleteTag(index, tagName, usageCount) {
       if (usageCount > 0) {
-        if (!confirm(`タグ「${tagName}」は現在 ${usageCount} 冊の本に設定されています。\n削除すると本からもこのタグが消えますが、本当によろしいですか？`)) return;
+        if (!confirm(`タグ「${tagName}」は現在 ${usageCount} 冊の本に設定されています。\n削除すると本からもこのタグが消えますが、本当によろしいですか？`)) {
+          return;
+        }
       } else {
-        if (!confirm(`タグ「${tagName}」を削除しますか？`)) return;
+        if (!confirm(`タグ「${tagName}」を削除しますか？`)) {
+          return;
+        }
       }
       
       collection.forEach(book => {
@@ -981,7 +1005,7 @@
     }
 
     function isDuplicateInCollection(isbn, title, author) {
-      if (!isbn) return false;
+      if (!isbn && !title) return false;
       if (!Array.isArray(collection)) return false;
       return collection.some(book => {
         if (isbn && book.isbn === isbn) return true;
@@ -991,7 +1015,7 @@
     }
 
     function isDuplicateInWishlist(isbn, title, author) {
-      if (!isbn) return false;
+      if (!isbn && !title) return false;
       if (!Array.isArray(wishlist)) return false;
       return wishlist.some(book => {
         if (isbn && book.isbn === isbn) return true;
@@ -1483,27 +1507,22 @@
     // ==========================================
     // リスト描画 (蔵書・ウィッシュリスト)
     // ==========================================
-    function renderList(type) {
-      const isCollection = (type === 'collection');
-      const listData = isCollection ? collection : wishlist;
-      
-      const filterInput = document.getElementById(`${type}-filter-input`) || document.getElementById(`${type}-search-input`);
-      const sortSelect = document.getElementById(`${type}-sort-select`);
-      const tagSelect = document.getElementById(`${type}-tag-select`);
-      
-      const containerId = type === 'wishlist' ? 'wishlist-list-container' : 'collection-list-container';
-      const container = document.getElementById(containerId);
-      const bulkArea = document.getElementById(`${type}-bulk-area`) || document.getElementById(`${type}list-bulk-area`);
-      const selectAll = document.getElementById(`selectAll${isCollection ? 'Collection' : 'Wishlist'}`);
+    function renderWishlist() {
+      const filterInput = document.getElementById('wishlist-filter-input');
+      const sortSelect = document.getElementById('wishlist-sort-select');
+      const tagSelect = document.getElementById('wishlist-tag-select');
+      const container = document.getElementById('wishlist-list-container');
+      const bulkArea = document.getElementById('wishlist-bulk-area');
+      const selectAll = document.getElementById('selectAllWishlist');
       
       if (!container) return;
       const query = filterInput ? filterInput.value.toLowerCase() : "";
-      const sortType = sortSelect ? sortSelect.value : "default";
+      const sortType = sortSelect ? sortSelect.value : "series";
       const selectedTag = tagSelect ? tagSelect.value : "";
       
       container.innerHTML = "";
       
-      let filtered = listData.filter(b => {
+      let filtered = wishlist.filter(b => {
         const t = b.title ? b.title.toLowerCase() : "";
         const a = b.author ? b.author.toLowerCase() : "";
         const p = b.publisher ? b.publisher.toLowerCase() : "";
@@ -1552,7 +1571,7 @@
       if(selectAll) selectAll.checked = false;
       
       filtered.forEach((book) => {
-        const originalIndex = listData.indexOf(book);
+        const originalIndex = wishlist.indexOf(book);
         const div = document.createElement('div');
         div.className = "book-item-container";
         
@@ -1567,19 +1586,10 @@
           seriesHtml = `<div class="book-series">[${escapeHtml(book.seriesName)}${escapeHtml(vol)}]</div>`;
         }
 
-        let extraMeta = "";
-        if (isCollection) {
-          let ratingNum = parseFloat(book.rating) || 0;
-          let ratingStar = ratingNum > 0 ? `<span class="rating-star">★${ratingNum}</span>` : "";
-          let statusBadge = book.status === 'read' ? `<span class="badge badge-read">既読</span>` : `<span class="badge badge-unread">未読</span>`;
-          let readDateBadge = (book.status === 'read' && book.readDate) ? `<span class="read-date-badge">読了: ${book.readDate.replace(/-/g, '/')}</span>` : "";
-          extraMeta = statusBadge + ratingStar + readDateBadge;
-        }
-
         div.innerHTML = `
           <div style="display: flex; align-items: center;">
             <div style="display:flex; align-items:center; padding-right:10px;">
-              <input type="checkbox" class="${type}-checkbox" value="${book.id}" onchange="updateSelectAllCheckbox('${type}')" style="width:18px;height:18px; cursor:pointer;">
+              <input type="checkbox" class="wishlist-checkbox" value="${book.id}" onchange="updateSelectAllCheckbox('wishlist')" style="width:18px;height:18px; cursor:pointer;">
             </div>
             <div style="flex-grow: 1; min-width:0; display: flex; align-items: center; justify-content: space-between;">
               <div class="book-header" style="flex-grow: 1; min-width: 0;">
@@ -1588,11 +1598,11 @@
                   ${seriesHtml}
                   <div class="book-title">${escapeHtml(book.title)}</div>
                   <div class="book-meta">${escapeHtml(book.author)} / ${escapeHtml(book.publisher || '不明')}</div>
-                  <div class="book-tags">${extraMeta}${tagsHtml}</div>
+                  <div class="book-tags">${tagsHtml}</div>
                 </div>
               </div>
               <div style="margin-left: 8px; flex-shrink: 0;">
-                <button class="btn-edit" onclick="openModal(${originalIndex}, '${type}')">編集</button>
+                <button class="btn-edit" onclick="openModal(${originalIndex}, 'wishlist')">編集</button>
               </div>
             </div>
           </div>
@@ -1602,7 +1612,6 @@
       setTimeout(checkScrollButtons, 100);
     }
 
-    function renderWishlist() { renderList('wishlist'); }
     function renderCollection() {
       const searchInput = document.getElementById('collection-search-input');
       const sortSelect = document.getElementById('collection-sort-select');
@@ -1616,7 +1625,7 @@
       
       if (!container) return;
       const query = searchInput ? searchInput.value.toLowerCase() : "";
-      const sortType = sortSelect ? sortSelect.value : "default";
+      const sortType = sortSelect ? sortSelect.value : "series";
       const selectedTag = tagSelect ? tagSelect.value : "";
       const selectedStatus = statusSelect ? statusSelect.value : "";
       const selectedRating = ratingSelect ? ratingSelect.value : "";
@@ -1850,7 +1859,7 @@
     }
 
     // ==========================================
-    // 4. データ入出力・共有CSV閲覧
+    // 4. データ入出力 (JSON出力・取込 / CSV出力・共有閲覧)
     // ==========================================
     function exportJSON() {
       try {
@@ -2068,7 +2077,7 @@
     // --- CSV閲覧機能 ---
     function parseCSVText(text) {
       text = text.replace(/^\uFEFF/, '');
-      const result = [];
+      const result =[];
       let row =[];
       let inQuotes = false;
       let val = '';
