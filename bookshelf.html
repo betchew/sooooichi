@@ -3,108 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書検索アプリ「ブックシェルフ」v16</title>
+  <title>蔵書検索アプリ「ブックシェルフ」v17</title>
   <!-- バーコードスキャン用ライブラリ -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
       --primary-color: #34495e; 
-      --bg-color: #f4f7f6;
+      --primary-dark: #2c3e50;
+      --secondary-color: #7f8c8d;
+      --bg-color: #f5f5f6;
       --card-bg: #ffffff;
-      --text-color: #333;
+      --text-main: #212121;
+      --text-sub: #757575;
+      --border-color: rgba(0, 0, 0, 0.12);
+      
+      --shadow-card: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+      --shadow-btn: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);
+      --shadow-btn-hover: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);
     }
+    
     body {
-      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-      margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color);
+      font-family: 'Roboto', 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main);
+      letter-spacing: 0.02em;
     }
-    .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
-    .screen.active { display: block; animation: fadeIn 0.3s; }
-    h1, h2, h3 { text-align: center; margin-top: 0; }
+    
+    .screen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+    .screen.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+    h1, h2, h3 { text-align: center; margin-top: 0; color: var(--text-main); font-weight: 500; }
+    h1 { font-size: 1.5em; margin-bottom: 24px; color: var(--primary-color); font-weight: 700;}
     
     .card {
-      background: var(--card-bg); padding: 20px; border-radius: 12px;
-      margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      background: var(--card-bg); padding: 16px 20px; border-radius: 8px;
+      margin-bottom: 16px; box-shadow: var(--shadow-card);
     }
-    .stats { font-size: 1.2em; text-align: center; margin-bottom: 10px; }
+    .stats { font-size: 1.1em; text-align: center; margin-bottom: 10px; display: flex; justify-content: space-around;}
+    .stats p { margin: 10px 0; font-weight: 500; color: var(--text-sub); }
+    .stats strong { font-size: 1.4em; color: var(--primary-color); }
+    
+    /* ホーム画面のボタンの色を統一 */
+    #screen-top .btn:nth-of-type(1),
+    #screen-top .btn:nth-of-type(2),
+    #screen-top .btn:nth-of-type(3),
+    #screen-top .btn:nth-of-type(4),
+    #screen-top .btn:nth-of-type(5) { 
+      background-color: var(--primary-color) !important; 
+      color: #ffffff !important; 
+    }
+    /* 6.使い方(ヘルプ) は落ち着いたアッシュグレーに */
+    #screen-top .btn:nth-of-type(6) { 
+      background-color: var(--secondary-color) !important; 
+      color: #ffffff !important; 
+      margin-top: 32px; 
+    }
     
     .btn {
-      display: block; width: 100%; padding: 12px; background: var(--primary-color); color: white;
-      border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
-      cursor: pointer; text-align: center; margin-bottom: 15px; box-sizing: border-box; transition: opacity 0.2s, transform 0.1s;
+      display: block; width: 100%; padding: 12px 16px; background: var(--primary-color); color: white;
+      border: none; border-radius: 4px; font-size: 15px; font-weight: 500; letter-spacing: 0.05em;
+      cursor: pointer; text-align: center; margin-bottom: 12px; box-sizing: border-box; 
+      box-shadow: var(--shadow-btn); transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
     }
-    .btn:hover { opacity: 0.9; }
-    .btn:active { transform: scale(0.98); }
-    .btn-back { background: #7f8c8d; width: auto; display: inline-block; padding: 8px 15px; margin-bottom: 0; font-weight: normal; }
-    .btn-delete { background: #e74c3c; width: auto; padding: 8px 15px; font-size: 14px; margin: 0; color: white;}
+    .btn:hover { background-color: var(--primary-dark); box-shadow: var(--shadow-btn-hover); }
+    .btn:active { box-shadow: var(--shadow-btn); transform: translateY(1px); }
+    
+    .btn-back { 
+      background: transparent !important; color: var(--text-sub) !important; 
+      box-shadow: none; border: 1px solid var(--border-color); width: auto; 
+      display: inline-block; padding: 6px 16px; margin-bottom: 0; 
+    }
+    .btn-back:hover { background: rgba(0,0,0,0.04) !important; box-shadow: none; color: var(--text-main) !important;}
+    
+    .btn-delete { 
+      background: transparent !important; color: #d32f2f !important; 
+      box-shadow: none; border: 1px solid rgba(211, 47, 47, 0.5); 
+      width: auto; padding: 6px 14px; font-size: 13px; margin: 0; 
+    }
+    .btn-delete:hover { background: rgba(211, 47, 47, 0.04) !important; border: 1px solid #d32f2f; box-shadow: none;}
+    
     .btn-edit {
-      width: auto; padding: 6px 12px; margin: 0; background-color: var(--primary-color); color: white;
-      border: none; border-radius: 15px; font-size: 0.85em; font-weight: bold; cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
+      width: auto; padding: 6px 16px; margin: 0; background-color: transparent; color: var(--primary-color);
+      border: 1px solid rgba(44, 62, 80, 0.5); border-radius: 4px; font-size: 0.85em; font-weight: 500; 
+      cursor: pointer; white-space: nowrap; transition: all 0.2s; box-shadow: none;
     }
-    .btn-edit:hover { opacity: 0.9; }
+    .btn-edit:hover { background-color: rgba(44, 62, 80, 0.04); border: 1px solid var(--primary-color); box-shadow: none;}
 
     .form-control {
-      width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; 
-      box-sizing: border-box; font-size: 16px; font-family: inherit; transition: border-color 0.2s;
+      width: 100%; padding: 12px 14px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.38); border-radius: 4px; 
+      box-sizing: border-box; font-size: 16px; font-family: inherit; background-color: transparent; transition: all 0.2s;
+      color: var(--text-main);
     }
-    .form-control:focus { outline: none; border-color: var(--primary-color); }
+    .form-control:hover { border-color: rgba(0,0,0,0.87); }
+    .form-control:focus { outline: none; border: 2px solid var(--primary-color); padding: 11px 13px; }
     
-    .nav-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-    .nav-header h2 { margin: 0; font-size: 1.3em; color: #2c3e50; }
+    .nav-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 8px; }
+    .nav-header h2 { margin: 0; font-size: 1.25em; color: var(--text-main); }
 
-    .book-item-container { border-bottom: 1px solid #f0f0f0; padding: 10px 0; }
+    .book-item-container { border-bottom: 1px solid var(--border-color); padding: 16px 0; }
     .book-item-container:last-child { border-bottom: none; }
     .book-header { display: flex; align-items: center; } 
     .book-info { flex-grow: 1; min-width: 0; }
-    .book-title { font-size: 1em; font-weight: bold; color: #2c3e50; margin-bottom: 2px; line-height: 1.2; word-break: break-all; }
-    .book-meta { font-size: 0.8em; color: #7f8c8d; margin-bottom: 4px; line-height: 1.2; word-break: break-all; }
-    .book-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.75em; margin-top: 2px; }
+    .book-title { font-size: 1.05em; font-weight: 500; color: var(--text-main); margin-bottom: 4px; line-height: 1.4; word-break: break-all; }
+    .book-meta { font-size: 0.85em; color: var(--text-sub); margin-bottom: 6px; line-height: 1.4; word-break: break-all; }
+    .book-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.75em; margin-top: 4px; }
     
-    .badge { padding: 3px 8px; border-radius: 10px; color: white; font-weight: bold; line-height: 1; }
-    .badge-read { background-color: #27ae60; }
-    .badge-unread { background-color: #95a5a6; }
-    .badge-tag { background-color: #3498db; }
-    .rating-star { color: #f39c12; font-weight: bold; font-size: 1em; letter-spacing: 1px; }
-    .read-date-badge { color: #555; background: #ecf0f1; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
-    .empty-msg { text-align: center; color: #bdc3c7; font-weight: bold; padding: 20px 0; }
+    .badge { padding: 4px 10px; border-radius: 16px; font-weight: 500; line-height: 1; border: 1px solid transparent; font-size: 0.85em; }
+    .badge-read { background-color: #e8f5e9; color: #2e7d32; border-color: rgba(46,125,50,0.2); }
+    .badge-unread { background-color: #f5f5f5; color: var(--text-sub); border-color: var(--border-color); }
+    .badge-tag { background-color: #e3f2fd; color: #1565c0; border-color: rgba(21,101,192,0.2); font-weight: 400; }
+    .rating-star { color: #fbc02d; font-weight: bold; font-size: 1.1em; letter-spacing: 1px; }
+    .read-date-badge { color: var(--text-sub); background: transparent; padding: 0; font-weight: normal; font-size: 0.9em; }
     
-    .bulk-action-area { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 10px 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; }
+    .empty-msg { text-align: center; color: var(--text-sub); font-weight: normal; padding: 40px 0; }
+    
+    .bulk-action-area { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); padding: 8px 16px; border-radius: 4px; margin-bottom: 16px; border: none; }
 
-    .tab-container { display: flex; border-bottom: 2px solid #eee; margin-bottom: 15px; }
-    .tab-btn { flex: 1; padding: 10px; text-align: center; cursor: pointer; background: none; border: none; border-bottom: 3px solid transparent; font-weight: bold; color: #95a5a6; transition: 0.2s; }
-    .tab-btn:hover { color: #7f8c8d; }
+    .tab-container { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+    .tab-btn { 
+      flex: 1; padding: 12px; text-align: center; cursor: pointer; background: none; border: none; 
+      border-bottom: 2px solid transparent; font-weight: 500; color: var(--text-sub); 
+      transition: all 0.2s; font-size: 0.95em; 
+    }
+    .tab-btn:hover { color: var(--text-main); background: rgba(0,0,0,0.04); }
     .tab-btn.active { border-bottom-color: var(--primary-color); color: var(--primary-color); }
     .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s; }
+    .tab-content.active { display: block; animation: fadeIn 0.2s ease-out; }
 
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-    .modal-content { background-color: #fff; margin: 10% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; box-sizing: border-box; position: relative; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    .close-btn { color: #bdc3c7; position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.2s; }
-    .close-btn:hover { color: #7f8c8d; }
-    .detail-row { display: flex; gap: 15px; margin-bottom: 10px; }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+    .modal-content { 
+      background-color: var(--card-bg); margin: 10% auto; padding: 24px; border-radius: 8px; 
+      width: 92%; max-width: 500px; box-sizing: border-box; position: relative; 
+      max-height: 80vh; overflow-y: auto; box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2), 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12); 
+    }
+    .close-btn { color: var(--text-sub); position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: normal; cursor: pointer; transition: color 0.2s; line-height: 1; }
+    .close-btn:hover { color: var(--text-main); }
+    .detail-row { display: flex; gap: 16px; margin-bottom: 4px; }
     .detail-row > div { flex: 1; }
     
-    .help-section { margin-bottom: 25px; }
-    .help-section h3 { text-align: left; color: #2980b9; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; margin-bottom: 10px; font-size: 1.1em; }
-    .help-section p, .help-section ul { font-size: 0.95em; line-height: 1.6; color: #555; margin-top: 0; }
-    .help-section ul { padding-left: 20px; margin-top: 5px; }
+    .help-section { margin-bottom: 24px; }
+    .help-section h3 { text-align: left; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; font-size: 1.1em; font-weight: 500;}
+    .help-section p, .help-section ul { font-size: 0.95em; line-height: 1.6; color: var(--text-sub); margin-top: 0; }
+    .help-section ul { padding-left: 24px; margin-top: 8px; }
     
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
 
   <!-- 0. トップ画面 -->
   <div id="screen-top" class="screen active">
-    <h1 style="color: #2c3e50; font-weight: 800;">📚 ブックシェルフv16</h1>
+    <h1 style="color: #2c3e50; font-weight: 800;">ブックシェルフv17</h1>
     <div class="card stats">
       <p>蔵書数: <strong id="count-collection" style="color: #2980b9; font-size: 1.2em;">0</strong> 冊</p>
       <p>ほしい本: <strong id="count-wish" style="color: #e67e22; font-size: 1.2em;">0</strong> 冊</p>
     </div>
-    <button class="btn" onclick="openScanFor('collection')">📷 1. 蔵書（ぞうしょ）に追加</button>
-    <button class="btn" onclick="showScreen('screen-wish')" style="background-color: #e67e22;">⭐ 2. ほしい本（ウィッシュリスト）</button>
-    <button class="btn" onclick="showScreen('screen-collection')" style="background-color: #27ae60;">📖 3. 蔵書一覧・検索</button>
-    <button class="btn" onclick="showScreen('screen-data')" style="background-color: #8e44ad;">📂 4. データ管理（出力 / 取込）</button>
-    <button class="btn" onclick="showScreen('screen-help')" style="background-color: #3498db; margin-top: 30px;">❔ 5. 使い方（ヘルプ）</button>
+    <button class="btn" onclick="openScanFor('collection')">1. 蔵書（ぞうしょ）に追加</button>
+    <button class="btn" onclick="showScreen('screen-wish')">2. ほしい本（ウィッシュリスト）</button>
+    <button class="btn" onclick="showScreen('screen-collection')">3. 蔵書一覧・検索</button>
+    <button class="btn" onclick="showScreen('screen-tags')">4. タグ管理</button>
+    <button class="btn" onclick="showScreen('screen-data')">5. データ管理（出力 / 取込）</button>
+    <button class="btn" onclick="showScreen('screen-help')">6. 使い方（ヘルプ）</button>
   </div>
 
   <!-- 1. バーコードスキャン画面 (連続・一括対応) -->
@@ -114,29 +171,29 @@
       <button class="btn btn-back" onclick="backFromScan()">戻る</button>
     </div>
     <div class="card">
-      <p style="font-size: 0.9em; color:#555; margin-top:0;">バーコードを写すと、下のリストにどんどん追加されます。最後に「一括登録する」ボタンを押してください。</p>
+      <p style="font-size: 0.9em; color:var(--text-sub); margin-top:0;">バーコードを写すと、下のリストにどんどん追加されます。最後に「一括登録する」ボタンを押してください。</p>
       
-      <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee;">
+      <div style="margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 4px; border: 1px solid var(--border-color);">
         <div style="display: flex; gap: 10px;">
           <input type="text" id="manual-isbn-input" class="form-control" placeholder="手入力 (例: 9784...)" style="margin-bottom: 0;">
-          <button class="btn" style="margin-bottom: 0; width: auto; white-space: nowrap; background-color: var(--primary-color);" onclick="searchManualISBN()">追加</button>
+          <button class="btn" style="margin-bottom: 0; width: auto; white-space: nowrap;" onclick="searchManualISBN()">追加</button>
         </div>
       </div>
 
       <div id="camera-select-container" style="margin-bottom: 15px;">
         <select id="camera-select" class="form-control"></select>
-        <button class="btn" id="start-scan-btn" onclick="startScanner()">📷 カメラを起動してスキャン</button>
+        <button class="btn" id="start-scan-btn" onclick="startScanner()">カメラを起動してスキャン</button>
         <button class="btn btn-back" id="stop-scan-btn" onclick="stopScanner()" style="display:none; width: 100%; margin-bottom: 10px;">スキャンを一時停止</button>
       </div>
-      <div id="reader" style="width:100%; border-radius: 8px; overflow: hidden;"></div>
+      <div id="reader" style="width:100%; border-radius: 4px; overflow: hidden;"></div>
     </div>
     
     <!-- スキャン結果の一時リスト -->
     <div id="staged-books-area" class="card" style="display:none;">
-      <h3 style="font-size:1.1em; color:#2c3e50; border-bottom:2px solid #eee; padding-bottom:5px;">📋 スキャンした本</h3>
+      <h3 style="font-size:1.1em; border-bottom:1px solid var(--border-color); padding-bottom:8px;">スキャンした本</h3>
       <div id="staged-books-list"></div>
-      <button class="btn" style="background-color:#27ae60; margin-top:15px;" onclick="openBulkRegisterModal()">📚 リストの本を一括登録する</button>
-      <button class="btn btn-delete" style="width:100%; background-color:#95a5a6;" onclick="clearStagedBooks()">リストを空にする</button>
+      <button class="btn" style="margin-top:15px;" onclick="openBulkRegisterModal()">リストの本を一括登録する</button>
+      <button class="btn btn-delete" style="width:100%;" onclick="clearStagedBooks()">リストを空にする</button>
     </div>
   </div>
 
@@ -144,11 +201,11 @@
   <div id="bulk-register-modal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeBulkRegisterModal()">&times;</span>
-      <h3 style="margin-bottom: 15px; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; color: #2c3e50;">📚 一括登録</h3>
-      <p style="color:#555; font-size:0.95em;"><strong id="bulk-count" style="font-size:1.2em; color:var(--primary-color);">0</strong> 件の本を登録します。</p>
+      <h3 style="margin-bottom: 15px; margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">一括登録</h3>
+      <p style="color:var(--text-sub); font-size:0.95em;"><strong id="bulk-count" style="font-size:1.2em; color:var(--primary-color);">0</strong> 件の本を登録します。</p>
       
-      <div style="margin-bottom:15px; background: #f8f9fa; padding:15px; border-radius:8px; border:1px solid #eee;">
-        <label style="font-weight:bold; font-size:0.9em; color: #7f8c8d;">まとめてタグを付ける (複数可)</label>
+      <div style="margin-bottom:15px; background: rgba(0,0,0,0.02); padding:15px; border-radius:4px; border:1px solid var(--border-color);">
+        <label style="font-weight:500; font-size:0.9em; color: var(--text-sub);">まとめてタグを付ける (複数可)</label>
         <div id="bulk-tag-list" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
         
         <div style="display:flex; gap:10px; margin-top:15px;">
@@ -157,7 +214,7 @@
         </div>
       </div>
       
-      <button class="btn" style="background-color: #27ae60; margin-top: 20px;" onclick="executeBulkRegister()">✅ この内容で登録する</button>
+      <button class="btn" style="margin-top: 20px;" onclick="executeBulkRegister()">この内容で登録する</button>
     </div>
   </div>
 
@@ -169,11 +226,11 @@
     </div>
     
     <div class="card">
-      <h3 style="font-size: 1.1em; margin-bottom: 10px;">➕ 新しく探して追加する</h3>
+      <h3 style="font-size: 1.1em; margin-bottom: 10px;">新しく探して追加する</h3>
       <div class="tab-container">
-        <button id="tab-btn-search" class="tab-btn active" onclick="switchWishTab('search')">🔍 キーワード</button>
-        <button id="tab-btn-scan" class="tab-btn" onclick="switchWishTab('scan')">📷/✍️ バーコード</button>
-        <button id="tab-btn-manual" class="tab-btn" onclick="switchWishTab('manual')">📝 手動入力</button>
+        <button id="tab-btn-search" class="tab-btn active" onclick="switchWishTab('search')">キーワード</button>
+        <button id="tab-btn-scan" class="tab-btn" onclick="switchWishTab('scan')">バーコード</button>
+        <button id="tab-btn-manual" class="tab-btn" onclick="switchWishTab('manual')">手動入力</button>
       </div>
 
       <div id="wish-tab-search" class="tab-content active">
@@ -186,24 +243,24 @@
         <p style="font-size:0.9em; margin-bottom: 15px;">本のバーコードを読み取るか、ISBNを入力して追加します。</p>
         <div style="display: flex; gap: 10px; margin-bottom: 15px; text-align: left;">
           <input type="text" id="wish-isbn-input" class="form-control" placeholder="ISBN (例: 978...)" style="margin-bottom: 0;">
-          <button class="btn" style="margin-bottom: 0; width: auto; white-space: nowrap; background-color: #e67e22;" onclick="searchWishISBN()">検索・追加</button>
+          <button class="btn" style="margin-bottom: 0; width: auto; white-space: nowrap;" onclick="searchWishISBN()">検索・追加</button>
         </div>
-        <button class="btn" style="background-color: #d68910;" onclick="openScanFor('wishlist')">📷 カメラ・連続スキャンへ</button>
+        <button class="btn" style="background-color: var(--secondary-color);" onclick="openScanFor('wishlist')">カメラ・連続スキャンへ</button>
       </div>
 
       <div id="wish-tab-manual" class="tab-content">
         <input type="text" id="manual-title" class="form-control" placeholder="タイトル (必須)">
         <input type="text" id="manual-author" class="form-control" placeholder="著者名">
         <input type="text" id="manual-publisher" class="form-control" placeholder="出版社">
-        <button class="btn" onclick="addManualWish()" style="background-color: #7f8c8d;">手動で追加</button>
+        <button class="btn" onclick="addManualWish()">手動で追加</button>
       </div>
     </div>
 
     <!-- ウィッシュリスト一覧 -->
     <div class="card">
-      <h3 style="margin-bottom: 15px;">⭐ リスト一覧</h3>
+      <h3 style="margin-bottom: 15px;">リスト一覧</h3>
       
-      <input type="text" id="wishlist-filter-input" class="form-control" placeholder="🔍 リストの中から検索" oninput="renderWishlist()">
+      <input type="text" id="wishlist-filter-input" class="form-control" placeholder="リストの中から検索" oninput="renderWishlist()">
       <div style="display:flex; gap:10px; margin-bottom: 15px;">
         <select id="wishlist-sort-select" class="form-control" onchange="renderWishlist()" style="margin-bottom: 0;">
           <option value="default">新しい順</option><option value="oldest">古い順</option>
@@ -215,10 +272,10 @@
       </div>
 
       <div class="bulk-action-area" id="wishlist-bulk-area" style="display:none;">
-        <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555; font-size: 0.9em;">
+        <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:500; color:var(--text-sub); font-size: 0.9em;">
           <input type="checkbox" id="selectAllWishlist" onchange="toggleSelectAll('wishlist')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
         </label>
-        <button class="btn btn-delete" style="margin:0; background-color: #e74c3c;" onclick="deleteSelected('wishlist')">選択を削除</button>
+        <button class="btn btn-delete" onclick="deleteSelected('wishlist')">選択を削除</button>
       </div>
       
       <div id="wishlist-list-container"></div>
@@ -233,7 +290,7 @@
     </div>
     
     <div class="card">
-      <input type="text" id="collection-search-input" class="form-control" placeholder="🔍 蔵書の中から検索" oninput="renderCollection()">
+      <input type="text" id="collection-search-input" class="form-control" placeholder="蔵書の中から検索" oninput="renderCollection()">
       <div style="display:flex; gap:10px; margin-bottom: 0;">
         <select id="collection-sort-select" class="form-control" onchange="renderCollection()" style="margin-bottom: 0;">
           <option value="default">新しい順</option><option value="oldest">古い順</option>
@@ -247,47 +304,64 @@
     
     <div class="card">
       <div class="bulk-action-area" id="collection-bulk-area" style="display:none;">
-        <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555; font-size: 0.9em;">
+        <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:500; color:var(--text-sub); font-size: 0.9em;">
           <input type="checkbox" id="selectAllCollection" onchange="toggleSelectAll('collection')" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
         </label>
-        <button class="btn btn-delete" style="margin:0; background-color: #e74c3c;" onclick="deleteSelected('collection')">選択を削除</button>
+        <button class="btn btn-delete" onclick="deleteSelected('collection')">選択を削除</button>
       </div>
       
       <div id="collection-list-container"></div>
     </div>
   </div>
 
-  <!-- 4. データ管理画面 -->
+  <!-- 4. タグ管理画面 -->
+  <div id="screen-tags" class="screen">
+    <div class="nav-header">
+      <h2>タグ管理</h2>
+      <button class="btn btn-back" onclick="showScreen('screen-top')">ホーム</button>
+    </div>
+    <div class="card">
+      <p style="font-size:0.9em; color:var(--text-sub); margin-top:0;">登録されているタグの一覧です。<br>タグを削除すると、設定されている本からもタグが外れます。</p>
+      
+      <div style="display:flex; gap:10px; margin-bottom: 20px;">
+        <input type="text" id="manage-new-tag-input" class="form-control" style="margin-bottom:0;" placeholder="新しいタグ名">
+        <button class="btn" style="width:auto; margin-bottom:0; white-space:nowrap;" onclick="addTagFromManage()">追加</button>
+      </div>
+
+      <div id="tags-list-container"></div>
+    </div>
+  </div>
+
+  <!-- 5. データ管理画面 -->
   <div id="screen-data" class="screen">
     <div class="nav-header">
       <h2>データ管理</h2>
       <button class="btn btn-back" onclick="showScreen('screen-top')">ホーム</button>
     </div>
 
-    <!-- 共有用CSV出力機能 -->
     <div class="card">
-      <h3 style="color:#16a085;">🤝 友達と共有 (CSV出力)</h3>
-      <p style="font-size:0.9em; color:#555;">蔵書の中から選んだ本を、Excel等で見られる「CSV形式」で出力します。おすすめの本を友達に教えたい時などに便利です。</p>
-      <button class="btn" style="background-color: #16a085;" onclick="showScreen('screen-export-csv')">共有用のCSVを作る</button>
+      <h3 style="color:#16a085;">友達と共有 (CSV出力)</h3>
+      <p style="font-size:0.9em; color:var(--text-sub);">蔵書の中から選んだ本を、Excel等で見られる「CSV形式」で出力します。おすすめの本を友達に教えたい時などに便利です。</p>
+      <button class="btn" style="background-color: #00897b;" onclick="showScreen('screen-export-csv')">共有用のCSVを作る</button>
     </div>
 
     <div class="card">
-      <h3>📥 データ保存 (バックアップ出力)</h3>
-      <p style="font-size:0.9em; color:#555;">すべてのデータを「JSONファイル」としてダウンロードして保存します。</p>
-      <button class="btn" style="background-color: #2980b9;" onclick="exportJSON()">データファイルを出力する</button>
+      <h3>データ保存 (バックアップ)</h3>
+      <p style="font-size:0.9em; color:var(--text-sub);">すべてのデータを「JSONファイル」としてダウンロードして保存します。</p>
+      <button class="btn" onclick="exportJSON()">データファイルを出力する</button>
     </div>
 
     <div class="card">
-      <h3>📤 データ取込 (復元)</h3>
-      <p style="font-size:0.9em; color:#555;">保存したJSONファイルを読み込むか、テキストを貼り付けてデータをアプリに戻します。<br>※すでに入っている本はスキップされます。</p>
+      <h3>データ取込 (復元)</h3>
+      <p style="font-size:0.9em; color:var(--text-sub);">保存したJSONファイルを読み込むか、テキストを貼り付けてデータをアプリに戻します。<br>※すでに入っている本はスキップされます。</p>
       <div style="margin-bottom: 20px;">
-        <h4 style="font-size:1em; margin-bottom:8px; color:#2c3e50;">方法1: ファイルから</h4>
+        <h4 style="font-size:1em; margin-bottom:8px; color:var(--text-main);">方法1: ファイルから</h4>
         <input type="file" id="import-file-input" accept=".json" class="form-control" onchange="importJSON(event)" style="margin-bottom: 0;">
       </div>
       <div>
-        <h4 style="font-size:1em; margin-bottom:8px; color:#2c3e50;">方法2: テキスト貼り付け</h4>
+        <h4 style="font-size:1em; margin-bottom:8px; color:var(--text-main);">方法2: テキスト貼り付け</h4>
         <textarea id="import-text-input" class="form-control" rows="5" placeholder="ここにJSONテキストを貼り付けてください..."></textarea>
-        <button class="btn" style="background-color: #27ae60; margin-top: 5px;" onclick="importJSONFromText()">テキストから読み込む</button>
+        <button class="btn" style="margin-top: 5px;" onclick="importJSONFromText()">テキストから読み込む</button>
       </div>
     </div>
   </div>
@@ -299,9 +373,9 @@
       <button class="btn btn-back" onclick="showScreen('screen-data')">戻る</button>
     </div>
     <div class="card">
-      <p style="font-size:0.9em; color:#555; margin-top:0;">CSVに出力して共有したい本を検索・選択してください。</p>
+      <p style="font-size:0.9em; color:var(--text-sub); margin-top:0;">CSVに出力して共有したい本を検索・選択してください。</p>
       
-      <input type="text" id="export-search-input" class="form-control" placeholder="🔍 蔵書の中から検索" oninput="renderExportCsvList()">
+      <input type="text" id="export-search-input" class="form-control" placeholder="蔵書の中から検索" oninput="renderExportCsvList()">
       <div style="display:flex; gap:10px; margin-bottom: 15px;">
         <select id="export-tag-select" class="form-control" onchange="renderExportCsvList()" style="margin-bottom: 0;">
           <option value="">すべてのタグ</option>
@@ -309,17 +383,17 @@
       </div>
 
       <div class="bulk-action-area" id="export-bulk-area" style="display:none;">
-        <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:bold; color:#555; font-size: 0.9em;">
+        <label style="display:flex; align-items:center; margin-bottom:0; cursor:pointer; font-weight:500; color:var(--text-sub); font-size: 0.9em;">
           <input type="checkbox" id="selectAllExport" onchange="toggleSelectAllExport()" style="width:18px; height:18px; margin-right:8px; cursor:pointer;"> 全選択
         </label>
-        <button class="btn" style="width:auto; margin:0; background-color: #16a085; padding: 8px 15px; font-size: 0.9em;" onclick="executeCsvExport()">📥 CSVダウンロード</button>
+        <button class="btn" style="width:auto; margin:0; background-color: #00897b; padding: 8px 16px; font-size: 0.9em;" onclick="executeCsvExport()">CSVダウンロード</button>
       </div>
       
       <div id="export-list-container"></div>
     </div>
   </div>
 
-  <!-- 5. 使い方（ヘルプ）画面 -->
+  <!-- 6. 使い方（ヘルプ）画面 -->
   <div id="screen-help" class="screen">
     <div class="nav-header">
       <h2>使い方（ヘルプ）</h2>
@@ -327,11 +401,11 @@
     </div>
     <div class="card">
       <div class="help-section">
-        <h3>📚 ブックシェルフってなに？</h3>
+        <h3>ブックシェルフってなに？</h3>
         <p>あなたが持っている本や、これから読みたい本をスマートに整理できるアプリです。<br>データはあなたのブラウザの中に自動で保存されます。</p>
       </div>
       <div class="help-section">
-        <h3>📷 1. 本を追加しよう</h3>
+        <h3>1. 本を追加しよう</h3>
         <p><strong>「蔵書に追加」</strong>ボタンから、カメラを起動してみよう！</p>
         <ul>
           <li>本のうしろにある、<b>上の段のバーコード（978か979から）</b>をカメラでうつすと、本の情報が自動で一時リストに入ります。</li>
@@ -339,18 +413,18 @@
         </ul>
       </div>
       <div class="help-section">
-        <h3>⭐ 2. ほしい本リスト（ウィッシュリスト）</h3>
+        <h3>2. ほしい本リスト（ウィッシュリスト）</h3>
         <p>本屋さんや図書館で見つけた<strong>「いつか読みたい本」</strong>をメモしておけます。</p>
       </div>
       <div class="help-section">
-        <h3>🏷️ タグ機能について</h3>
+        <h3>タグ機能について</h3>
         <p>「小説」「マンガ」「勉強用」など、好きな<b>タグ（目印）</b>を作って本に付けられます。タグをつけておけば、蔵書一覧の画面で「マンガだけ」を絞り込んで見ることができます。</p>
       </div>
       <div class="help-section">
-        <h3>📂 4. データ管理（出力 / 取込）</h3>
+        <h3>データ管理（出力 / 取込）</h3>
         <p>スマホやパソコンを新しくする時や、友達に教える時に使います。</p>
         <ul>
-          <li><b>「JSON出力(保存)」</b>を押すと今の本のリストがまるごとダウンロードされます。新しいスマホで<b>「取込」</b>を行うとデータがもどってきます。</li>
+          <li><b>「データ保存(バックアップ)」</b>を押すと今の本のリストがまるごとダウンロードされます。新しいスマホで<b>「取込」</b>を行うとデータがもどってきます。</li>
           <li><b>「CSV出力(友達と共有)」</b>を使うと、選んだ本のリストをExcelなどで見られる形式にしてダウンロードできます。おすすめの本を友達に教えたい時に便利です！</li>
         </ul>
       </div>
@@ -361,28 +435,28 @@
   <div id="book-modal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
-      <h3 style="margin-bottom: 15px; margin-top: 0; text-align: left; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; color: #2c3e50;">📝 詳細・編集</h3>
+      <h3 style="margin-bottom: 15px; margin-top: 0; text-align: left; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">詳細・編集</h3>
       
-      <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">タイトル</label>
-      <input type="text" id="modal-edit-title" class="form-control" style="font-weight: bold; color: #2c3e50;">
+      <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">タイトル</label>
+      <input type="text" id="modal-edit-title" class="form-control" style="font-weight: bold; color: var(--text-main);">
       
       <div class="detail-row">
         <div>
-          <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">著者名</label>
+          <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">著者名</label>
           <input type="text" id="modal-edit-author" class="form-control">
         </div>
         <div>
-          <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">出版社</label>
+          <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">出版社</label>
           <input type="text" id="modal-edit-publisher" class="form-control">
         </div>
       </div>
       
-      <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">ISBN (バーコード番号)</label>
+      <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">ISBN (バーコード番号)</label>
       <input type="text" id="modal-edit-isbn" class="form-control">
 
       <!-- タグ編集エリア -->
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;">
-        <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">🏷️ タグ</label>
+      <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 4px; border: 1px solid var(--border-color); margin-top: 15px;">
+        <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">タグ</label>
         <div id="modal-tag-list" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
         <div style="display:flex; gap:10px; margin-top:15px;">
           <input type="text" id="modal-new-tag-input" class="form-control" style="margin-bottom:0; padding:8px;" placeholder="新しいタグ名">
@@ -392,36 +466,36 @@
 
       <!-- コレクション用のフィールド -->
       <div id="modal-collection-fields" style="display:none;">
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;">
+        <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 4px; border: 1px solid var(--border-color); margin-top: 15px;">
           <div class="detail-row">
             <div>
-              <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">状態</label>
+              <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">状態</label>
               <select id="modal-status" class="form-control" style="margin-bottom: 0;">
                 <option value="unread">未読</option>
                 <option value="read">既読</option>
               </select>
             </div>
             <div>
-              <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">読了日</label>
+              <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">読了日</label>
               <input type="date" id="modal-read-date" class="form-control" style="margin-bottom: 0;" onchange="onReadDateChange()">
             </div>
           </div>
           <div style="margin-top: 10px;">
-            <label style="font-weight:bold; font-size:0.85em; color: #7f8c8d;">評価 (面白さ)</label>
-            <select id="modal-rating" class="form-control" style="margin-bottom: 0; color: #f39c12; font-weight: bold;">
-              <option value="0" style="color: #333; font-weight: normal;">未評価</option>
+            <label style="font-weight:500; font-size:0.85em; color: var(--text-sub);">評価 (面白さ)</label>
+            <select id="modal-rating" class="form-control" style="margin-bottom: 0; color: #fbc02d; font-weight: bold;">
+              <option value="0" style="color: var(--text-main); font-weight: normal;">未評価</option>
               <option value="1">★1</option><option value="2">★2</option><option value="3">★3</option><option value="4">★4</option><option value="5">★5 (最高)</option>
             </select>
           </div>
-          <label style="font-weight:bold; font-size:0.85em; margin-top: 10px; display:block; color: #7f8c8d;">読んだ感想・メモ</label>
+          <label style="font-weight:500; font-size:0.85em; margin-top: 10px; display:block; color: var(--text-sub);">読んだ感想・メモ</label>
           <textarea id="modal-review" class="form-control" rows="3" placeholder="感想やメモを入力..."></textarea>
         </div>
       </div>
       
       <div class="action-buttons" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
-        <button class="btn" style="background-color: var(--primary-color); flex: 1; margin: 0;" onclick="saveModal()">💾 保存してとじる</button>
-        <button id="modal-move-btn" class="btn" style="background-color: #27ae60; flex: 1; margin: 0; display: none;" onclick="moveFromModal()">📖 蔵書へ移動</button>
-        <button class="btn btn-delete" style="flex: 0 0 auto; margin: 0; background-color: #e74c3c;" onclick="deleteFromModal()">🗑 削除</button>
+        <button class="btn" style="flex: 1; margin: 0;" onclick="saveModal()">保存してとじる</button>
+        <button id="modal-move-btn" class="btn" style="background-color: var(--secondary-color); flex: 1; margin: 0; display: none;" onclick="moveFromModal()">蔵書へ移動</button>
+        <button class="btn btn-delete" style="flex: 0 0 auto; margin: 0;" onclick="deleteFromModal()">削除</button>
       </div>
     </div>
   </div>
@@ -430,8 +504,8 @@
     // ==========================================
     // データ管理・タグ管理
     // ==========================================
-    let collection =[];
-    let wishlist =[];
+    let collection = [];
+    let wishlist = [];
     let userTags =[];
 
     function initData() {
@@ -449,14 +523,14 @@
         if (w && w !== "undefined" && w !== "null") {
           wishlist = JSON.parse(w);
           if (!Array.isArray(wishlist)) wishlist =[]; 
-          else wishlist.forEach((b, i) => { if (!b.id) b.id = Date.now() + 10000 + i; if(!b.tags) b.tags =[]; });
+          else wishlist.forEach((b, i) => { if (!b.id) b.id = Date.now() + 10000 + i; if(!b.tags) b.tags = []; });
         }
       } catch (e) { wishlist =[]; }
       
       try {
         const t = localStorage.getItem('bookshelf_tags');
         if (t && t !== "undefined" && t !== "null") userTags = JSON.parse(t);
-        else userTags =['小説', 'マンガ', 'ビジネス', '勉強用', 'お気に入り']; 
+        else userTags = ['小説', 'マンガ', 'ビジネス', '勉強用', 'お気に入り']; 
       } catch (e) { userTags =['小説', 'マンガ', 'ビジネス', '勉強用', 'お気に入り']; }
       
       updateTagSelects();
@@ -473,7 +547,6 @@
     }
 
     function updateTagSelects() {
-      // 修正: 配列を変数に入れてから処理することでエラーを完全に防止
       const selectIds =['collection-tag-select', 'wishlist-tag-select', 'export-tag-select'];
       selectIds.forEach(id => {
         const el = document.getElementById(id);
@@ -482,7 +555,7 @@
         el.innerHTML = '<option value="">すべてのタグ</option>';
         userTags.forEach(tag => {
           const opt = document.createElement('option');
-          opt.value = tag; opt.text = `🏷️ ${tag}`;
+          opt.value = tag; opt.text = tag;
           el.appendChild(opt);
         });
         el.value = currentVal; 
@@ -496,7 +569,7 @@
       userTags.forEach(tag => {
         const isChecked = selectedTags.includes(tag) ? 'checked' : '';
         container.innerHTML += `
-          <label style="cursor:pointer; display:inline-flex; align-items:center; background:#fff; padding:6px 12px; border-radius:15px; font-size:0.85em; color:#2c3e50; border:1px solid #ccc;">
+          <label style="cursor:pointer; display:inline-flex; align-items:center; background:#fff; padding:6px 12px; border-radius:15px; font-size:0.85em; color:var(--text-main); border:1px solid var(--border-color);">
             <input type="checkbox" value="${escapeHtml(tag)}" class="${containerId}-checkbox" style="margin-right:6px;" ${isChecked}> ${escapeHtml(tag)}
           </label>
         `;
@@ -512,6 +585,87 @@
         return true;
       }
       return false;
+    }
+
+    // --- タグ管理画面の機能 ---
+    function renderTagManagement() {
+      const container = document.getElementById('tags-list-container');
+      if (!container) return;
+      container.innerHTML = "";
+      if (userTags.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>タグがありません。</p>";
+        return;
+      }
+      userTags.forEach((tag, index) => {
+        const div = document.createElement('div');
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        div.style.padding = "12px 0";
+        div.style.borderBottom = "1px solid var(--border-color)";
+        
+        const countCollection = collection.filter(b => b.tags && b.tags.includes(tag)).length;
+        const countWishlist = wishlist.filter(b => b.tags && b.tags.includes(tag)).length;
+        const totalCount = countCollection + countWishlist;
+        
+        div.innerHTML = `
+          <div style="flex-grow:1; min-width:0; padding-right:10px;">
+            <div style="font-weight:bold; color:var(--text-main); word-break:break-all;">${escapeHtml(tag)}</div>
+            <div style="font-size:0.85em; color:var(--text-sub);">使用中: ${totalCount}冊</div>
+          </div>
+          <button class="btn btn-delete" style="margin:0; flex-shrink:0;" onclick="deleteTag(${index}, '${escapeHtml(tag)}', ${totalCount})">削除</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addTagFromManage() {
+      const input = document.getElementById('manage-new-tag-input');
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val) {
+        alert("タグ名を入力してください。");
+        return;
+      }
+      if (addNewTag(val)) {
+        input.value = "";
+        renderTagManagement();
+      } else {
+        alert("そのタグは既に存在します。");
+      }
+    }
+
+    function deleteTag(index, tagName, usageCount) {
+      if (usageCount > 0) {
+        if (!confirm(`タグ「${tagName}」は現在 ${usageCount} 冊の本に設定されています。\n削除すると本からもこのタグが消えますが、本当によろしいですか？`)) {
+          return;
+        }
+      } else {
+        if (!confirm(`タグ「${tagName}」を削除しますか？`)) {
+          return;
+        }
+      }
+      
+      // 蔵書からタグを削除
+      collection.forEach(book => {
+        if (book.tags && book.tags.includes(tagName)) {
+          book.tags = book.tags.filter(t => t !== tagName);
+        }
+      });
+      
+      // ウィッシュリストからタグを削除
+      wishlist.forEach(book => {
+        if (book.tags && book.tags.includes(tagName)) {
+          book.tags = book.tags.filter(t => t !== tagName);
+        }
+      });
+      
+      // userTagsから削除
+      userTags.splice(index, 1);
+      
+      saveData();
+      updateTagSelects();
+      renderTagManagement();
     }
 
     // --- 一括操作 ---
@@ -565,14 +719,24 @@
       } catch(e) { return ""; }
     }
 
-    function isDuplicateInCollection(isbn) {
-      if (!isbn || !Array.isArray(collection)) return false;
-      return collection.some(book => book.isbn === isbn);
+    function isDuplicateInCollection(isbn, title, author) {
+      if (!Array.isArray(collection)) return false;
+      return collection.some(book => {
+        if (isbn && book.isbn === isbn) return true;
+        if (title && book.title === title && book.author === author) return true;
+        return false;
+      });
     }
-    function isDuplicateInWishlist(isbn) {
-      if (!isbn || !Array.isArray(wishlist)) return false;
-      return wishlist.some(book => book.isbn === isbn);
+
+    function isDuplicateInWishlist(isbn, title, author) {
+      if (!Array.isArray(wishlist)) return false;
+      return wishlist.some(book => {
+        if (isbn && book.isbn === isbn) return true;
+        if (title && book.title === title && book.author === author) return true;
+        return false;
+      });
     }
+
     function escapeHtml(str) {
       if (!str) return "";
       return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
@@ -606,6 +770,8 @@
         document.getElementById('collection-sort-select').value = "default";
         document.getElementById('collection-tag-select').value = "";
         renderCollection();
+      } else if (screenId === 'screen-tags') {
+        renderTagManagement();
       } else if (screenId === 'screen-export-csv') {
         document.getElementById('export-search-input').value = "";
         document.getElementById('export-tag-select').value = "";
@@ -772,7 +938,7 @@
     async function addStagedBook(isbn) {
       if (stagedBooks.some(b => b.isbn === isbn)) return; 
       
-      const bookEntry = { id: Date.now() + Math.random(), isbn: isbn, title: "🔍 検索中...", author: "", publisher: "", thumbnail: "", status: 'loading' };
+      const bookEntry = { id: Date.now() + Math.random(), isbn: isbn, title: "検索中...", author: "", publisher: "", thumbnail: "", status: 'loading' };
       stagedBooks.unshift(bookEntry);
       renderStagedBooks();
       
@@ -783,7 +949,7 @@
         if (bookData) {
           stagedBooks[index] = { ...stagedBooks[index], ...bookData, status: 'done' };
         } else {
-          stagedBooks[index].title = "❌ 見つかりません";
+          stagedBooks[index].title = "見つかりません";
           stagedBooks[index].status = 'error';
         }
         renderStagedBooks();
@@ -815,9 +981,9 @@
         div.style.display = "flex"; div.style.alignItems = "center"; div.style.justifyContent = "space-between";
         
         if (b.status === 'loading') {
-          div.innerHTML = `<div style="color:#7f8c8d; font-size:0.9em; font-weight:bold;">${b.title}<br><small>ISBN: ${b.isbn}</small></div><button class="btn-delete" style="padding:4px 8px; border-radius:15px;" onclick="removeStagedBook(${i})">取消</button>`;
+          div.innerHTML = `<div style="color:var(--text-sub); font-size:0.9em; font-weight:500;">${b.title}<br><small>ISBN: ${b.isbn}</small></div><button class="btn-delete" style="padding:4px 8px; border-radius:15px;" onclick="removeStagedBook(${i})">取消</button>`;
         } else if (b.status === 'error') {
-          div.innerHTML = `<div style="color:#e74c3c; font-size:0.9em; font-weight:bold;">${b.title}<br><small>ISBN: ${b.isbn}</small></div><button class="btn-delete" style="padding:4px 8px; border-radius:15px;" onclick="removeStagedBook(${i})">削除</button>`;
+          div.innerHTML = `<div style="color:#d32f2f; font-size:0.9em; font-weight:500;">${b.title}<br><small>ISBN: ${b.isbn}</small></div><button class="btn-delete" style="padding:4px 8px; border-radius:15px;" onclick="removeStagedBook(${i})">削除</button>`;
         } else {
           div.innerHTML = `
             <div class="book-header" style="flex-grow:1; min-width:0;">
@@ -874,12 +1040,12 @@
         };
         
         if (currentScanTarget === 'collection') {
-          if(!isDuplicateInCollection(b.isbn)) {
+          if(!isDuplicateInCollection(b.isbn, b.title, b.author)) {
             bookData.status = 'unread'; bookData.readDate = ''; bookData.review = ''; bookData.rating = 0;
             collection.unshift(bookData); successCount++;
           } else dupCount++;
         } else {
-          if(!isDuplicateInWishlist(b.isbn) && !isDuplicateInCollection(b.isbn)) {
+          if(!isDuplicateInWishlist(b.isbn, b.title, b.author) && !isDuplicateInCollection(b.isbn, b.title, b.author)) {
             wishlist.unshift(bookData); successCount++;
           } else dupCount++;
         }
@@ -917,8 +1083,8 @@
       
       const bookData = await fetchBookData(isbn);
       if (bookData) {
-        if (isDuplicateInCollection(isbn)) { alert("既に蔵書リストにあるため追加できません。"); return; }
-        if (isDuplicateInWishlist(isbn)) { alert("既にリストにあります。"); return; }
+        if (isDuplicateInCollection(isbn, bookData.title, bookData.author)) { alert("既に蔵書にあるため追加できません。"); return; }
+        if (isDuplicateInWishlist(isbn, bookData.title, bookData.author)) { alert("既にリストにあります。"); return; }
         wishlist.unshift({ id: Date.now(), title: bookData.title, author: bookData.author, publisher: bookData.publisher, thumbnail: bookData.thumbnail, isbn: isbn, tags:[] });
         saveData(); alert("リストに追加しました！"); renderWishlist(); inputEl.value = "";
       } else {
@@ -969,7 +1135,7 @@
             });
           }
         } catch(e2) {
-          resultsDiv.innerHTML = `<p style="color:red;">検索に失敗しました。少し時間をおいてから再度お試しください。</p>`;
+          resultsDiv.innerHTML = `<p style="color:#d32f2f;">検索に失敗しました。少し時間をおいてから再度お試しください。</p>`;
           return;
         }
       }
@@ -992,8 +1158,8 @@
           btn.className = "btn"; btn.style.backgroundColor = "#e67e22"; btn.style.marginTop = "10px"; btn.style.padding = "8px";
           btn.textContent = "リストに追加";
           btn.onclick = () => {
-            if (isDuplicateInCollection(book.isbn)) { alert("既に「蔵書」にあるため追加できません。"); return; }
-            if (isDuplicateInWishlist(book.isbn)) { alert("既にリストにあります。"); return; }
+            if (isDuplicateInCollection(book.isbn, book.title, book.author)) { alert("既に「蔵書」にあるため追加できません。"); return; }
+            if (isDuplicateInWishlist(book.isbn, book.title, book.author)) { alert("既にリストにあります。"); return; }
             wishlist.unshift({ id: Date.now(), title: book.title, author: book.author, publisher: book.publisher, thumbnail: book.thumbnail, isbn: book.isbn, tags:[] });
             saveData(); alert("追加しました！"); renderWishlist(); resultsDiv.innerHTML = ""; inputEl.value = "";
           };
@@ -1006,12 +1172,15 @@
 
     function addManualWish() {
       const titleEl = document.getElementById('manual-title');
-      const title = titleEl.value;
-      const author = document.getElementById('manual-author').value || "著者不明";
-      const publisher = document.getElementById('manual-publisher').value || "出版社不明";
+      const title = titleEl.value.trim();
+      const author = document.getElementById('manual-author').value.trim() || "著者不明";
+      const publisher = document.getElementById('manual-publisher').value.trim() || "出版社不明";
       if (!title) { alert("タイトルを入力してください"); return; }
       
-      wishlist.unshift({ id: Date.now(), title, author, publisher, thumbnail:"", isbn:"", tags:[] });
+      if (isDuplicateInCollection("", title, author)) { alert("この本は既に「蔵書」にあるため追加できません。"); return; }
+      if (isDuplicateInWishlist("", title, author)) { alert("既にリストにあります。"); return; }
+
+      wishlist.unshift({ id: Date.now(), title, author, publisher, thumbnail: "", isbn: "", tags:[] });
       saveData(); alert("追加しました！"); renderWishlist();
       titleEl.value = ""; document.getElementById('manual-author').value = ""; document.getElementById('manual-publisher').value = "";
     }
@@ -1070,7 +1239,7 @@
         
         let tagsHtml = "";
         if(book.tags && book.tags.length > 0) {
-          tagsHtml = book.tags.map(t => `<span class="badge badge-tag">🏷️${escapeHtml(t)}</span>`).join('');
+          tagsHtml = book.tags.map(t => `<span class="badge badge-tag">${escapeHtml(t)}</span>`).join('');
         }
 
         let extraMeta = "";
@@ -1097,7 +1266,7 @@
                 </div>
               </div>
               <div style="margin-left: 8px; flex-shrink: 0;">
-                <button class="btn-edit" onclick="openModal(${originalIndex}, '${type}')">📝 編集</button>
+                <button class="btn-edit" onclick="openModal(${originalIndex}, '${type}')">詳細・編集</button>
               </div>
             </div>
           </div>
@@ -1203,11 +1372,11 @@
       book.isbn = document.getElementById('modal-edit-isbn').value.trim();
       book.tags = Array.from(document.querySelectorAll('.modal-tag-list-checkbox:checked')).map(cb => cb.value);
 
-      if (isDuplicateInCollection(book.isbn)) { alert("既に蔵書リストにあるため移動できません。"); return; }
+      if (isDuplicateInCollection(book.isbn, book.title, book.author)) { alert("既に蔵書リストにあるため移動できません。"); return; }
       
       collection.unshift({ ...book, id: Date.now(), status: 'unread', review: '', rating: 0, readDate: '' });
       wishlist.splice(currentEditIndex, 1);
-      saveData(); renderWishlist(); closeModal(); alert("蔵書リストへ移動しました！");
+      saveData(); renderWishlist(); closeModal(); alert("蔵書へ移動しました！");
     }
 
     function deleteFromModal() {
@@ -1222,7 +1391,7 @@
     window.onclick = function(e) { if (e.target == document.getElementById('book-modal')) closeModal(); else if (e.target == document.getElementById('bulk-register-modal')) closeBulkRegisterModal(); }
 
     // ==========================================
-    // 4. データ入出力 (JSON出力・取込 / CSV出力)
+    // 5. データ管理 (JSON出力・取込 / CSV出力)
     // ==========================================
     function exportJSON() {
       try {
@@ -1257,7 +1426,7 @@
 
       if (data.books && Array.isArray(data.books)) {
         data.books.forEach((item, i) => {
-          if (!isDuplicateInCollection(item.isbn)) {
+          if (!isDuplicateInCollection(item.isbn, item.title, item.author)) {
             let status = 'unread';
             if (item.status === '既読' || item.status === '読了' || parseInt(item.rating) > 0 || (typeof item.impression === 'string' && item.impression.length > 0)) status = 'read';
             let readDate = (item.date && item.date !== "未購入") ? formatDateForInput(item.date) : "";
@@ -1275,7 +1444,7 @@
 
       if (data.wishlist && Array.isArray(data.wishlist)) {
         data.wishlist.forEach((item, i) => {
-          if (!isDuplicateInWishlist(item.isbn) && !isDuplicateInCollection(item.isbn)) {
+          if (!isDuplicateInWishlist(item.isbn, item.title, item.author) && !isDuplicateInCollection(item.isbn, item.title, item.author)) {
             let readDate = (item.date && item.date !== "未購入") ? formatDateForInput(item.date) : "";
             if(item.tags && Array.isArray(item.tags)) item.tags.forEach(t => { if(!userTags.includes(t)) userTags.push(t); });
 
@@ -1311,7 +1480,6 @@
       catch (err) { alert("正しいJSON形式か確認してください。"); }
     }
 
-    // --- CSVエクスポート機能 ---
     function escapeCSV(str) {
       if (str == null) return '""';
       return `"${String(str).replace(/"/g, '""')}"`;
@@ -1371,7 +1539,7 @@
         
         let tagsHtml = "";
         if(book.tags && book.tags.length > 0) {
-          tagsHtml = book.tags.map(t => `<span class="badge badge-tag">🏷️${escapeHtml(t)}</span>`).join('');
+          tagsHtml = book.tags.map(t => `<span class="badge badge-tag">${escapeHtml(t)}</span>`).join('');
         }
 
         let ratingNum = parseInt(book.rating) || 0;
@@ -1423,6 +1591,86 @@
       const now = new Date(); const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
       a.download = `bookshelf_export_${dateStr}.csv`;
       a.click(); URL.revokeObjectURL(url);
+    }
+
+    // ==========================================
+    // タグ管理画面
+    // ==========================================
+    function renderTagManagement() {
+      const container = document.getElementById('tags-list-container');
+      if (!container) return;
+      container.innerHTML = "";
+      if (userTags.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>タグがありません。</p>";
+        return;
+      }
+      userTags.forEach((tag, index) => {
+        const div = document.createElement('div');
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        div.style.padding = "12px 0";
+        div.style.borderBottom = "1px solid var(--border-color)";
+        
+        const countCollection = collection.filter(b => b.tags && b.tags.includes(tag)).length;
+        const countWishlist = wishlist.filter(b => b.tags && b.tags.includes(tag)).length;
+        const totalCount = countCollection + countWishlist;
+        
+        div.innerHTML = `
+          <div style="flex-grow:1; min-width:0; padding-right:10px;">
+            <div style="font-weight:bold; color:var(--text-main); word-break:break-all;">${escapeHtml(tag)}</div>
+            <div style="font-size:0.85em; color:var(--text-sub);">使用中: ${totalCount}冊</div>
+          </div>
+          <button class="btn btn-delete" style="margin:0; flex-shrink:0;" onclick="deleteTag(${index}, '${escapeHtml(tag)}', ${totalCount})">削除</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addTagFromManage() {
+      const input = document.getElementById('manage-new-tag-input');
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val) {
+        alert("タグ名を入力してください。");
+        return;
+      }
+      if (addNewTag(val)) {
+        input.value = "";
+        renderTagManagement();
+      } else {
+        alert("そのタグは既に存在します。");
+      }
+    }
+
+    function deleteTag(index, tagName, usageCount) {
+      if (usageCount > 0) {
+        if (!confirm(`タグ「${tagName}」は現在 ${usageCount} 冊の本に設定されています。\n削除すると本からもこのタグが消えますが、本当によろしいですか？`)) {
+          return;
+        }
+      } else {
+        if (!confirm(`タグ「${tagName}」を削除しますか？`)) {
+          return;
+        }
+      }
+      
+      collection.forEach(book => {
+        if (book.tags && book.tags.includes(tagName)) {
+          book.tags = book.tags.filter(t => t !== tagName);
+        }
+      });
+      
+      wishlist.forEach(book => {
+        if (book.tags && book.tags.includes(tagName)) {
+          book.tags = book.tags.filter(t => t !== tagName);
+        }
+      });
+      
+      userTags.splice(index, 1);
+      
+      saveData();
+      updateTagSelects();
+      renderTagManagement();
     }
 
     // 初期化表示
